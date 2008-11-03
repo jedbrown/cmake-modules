@@ -168,5 +168,5 @@ find_package_handle_standard_args (PETSc
   "PETSc could not be found.  Be sure to set PETSC_DIR and PETSC_ARCH."
   PETSC_INCLUDE_PATH PETSC_LIBRARIES)
 
-# show the PETSC_INCLUDE_DIRS and PETSC_LIBRARIES variables only in the advanced view
+# show the PETSC_INCLUDE_PATH and PETSC_LIBRARIES variables only in the advanced view
 mark_as_advanced (PETSC_INCLUDE_PATH PETSC_LIBRARIES PETSC_COMPILER PETSC_DEFINITIONS PETSC_MPIEXEC)
