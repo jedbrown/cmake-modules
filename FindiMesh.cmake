@@ -2,7 +2,7 @@
 # Once done this will define
 #
 #  IMESH_FOUND - system has iMesh
-#  IMESH_INCLUDE_PATH - The iMesh include directory
+#  IMESH_INCLUDE_DIRS - The iMesh include directory
 #  IMESH_LIBRARIES - Link these to use iMesh
 #
 # Setting this changes the behavior of the search
@@ -25,7 +25,7 @@ if (NOT "${IMESH_DEFS_FILE}" STREQUAL "${IMESH_DEFS_FILE_PRIVATE}")
   set (IMESH_CONFIG_CURRENT FALSE)
 endif (NOT "${IMESH_DEFS_FILE}" STREQUAL "${IMESH_DEFS_FILE_PRIVATE}")
 
-if (IMESH_CONFIG_CURRENT AND IMESH_INCLUDE_PATH AND IMESH_LIBRARIES)
+if (IMESH_CONFIG_CURRENT AND IMESH_INCLUDE_DIRS AND IMESH_LIBRARIES)
   # Do nothing: all variables are in cache
 elseif (IMESH_DEFS_FILE)
   set (IMESH_DEFS_FILE_PRIVATE ${IMESH_DEFS_FILE} CACHE INTERNAL "Saved value" FORCE)
@@ -57,14 +57,14 @@ show_libs :
   file (REMOVE ${IMESH_CONFIG_MAKEFILE})
 
   # collect the includes and strip
-  string (REGEX MATCHALL "-I([^\" ]+|\"[^\"]+\")" IMESH_ALL_INCLUDE_PATHS "${IMESH_INCLUDES_LINE}")
-  set (IMESH_INCLUDE_PATH_WORK)
-  foreach (IPATH ${IMESH_ALL_INCLUDE_PATHS})
+  string (REGEX MATCHALL "-I([^\" ]+|\"[^\"]+\")" IMESH_ALL_INCLUDE_DIRSS "${IMESH_INCLUDES_LINE}")
+  set (IMESH_INCLUDE_DIRS_WORK)
+  foreach (IPATH ${IMESH_ALL_INCLUDE_DIRSS})
     string (REGEX REPLACE "^-I" "" IPATH ${IPATH})
     string (REGEX REPLACE "//" "/" IPATH ${IPATH})
-    list (APPEND IMESH_INCLUDE_PATH_WORK ${IPATH})
+    list (APPEND IMESH_INCLUDE_DIRS_WORK ${IPATH})
   endforeach (IPATH)
-  list (REMOVE_DUPLICATES IMESH_INCLUDE_PATH_WORK)
+  list (REMOVE_DUPLICATES IMESH_INCLUDE_DIRS_WORK)
 
   # scan tokens, find library with current library directories
   string (REGEX MATCHALL "(-L|-Wl,|-l)([^\" ]+|\"[^\"]+\")" IMESH_ALL_LINK_TOKENS "${IMESH_LIBS_LINE}")
@@ -98,15 +98,15 @@ show_libs :
   set (IMESH_LIB "IMESH_LIB-NOTFOUND" CACHE INTERNAL "Scratch variable for PETSc detection" FORCE)
   list (REMOVE_DUPLICATES IMESH_LIBRARIES_FOUND)
 
-  set (IMESH_INCLUDE_PATH ${IMESH_INCLUDE_PATH_WORK} CACHE STRING "iMesh include path" FORCE)
+  set (IMESH_INCLUDE_DIRS ${IMESH_INCLUDE_DIRS_WORK} CACHE STRING "iMesh include path" FORCE)
   set (IMESH_LIBRARIES ${IMESH_LIBRARIES_FOUND} CACHE STRING "iMesh libraries" FORCE)
-endif (IMESH_CONFIG_CURRENT AND IMESH_INCLUDE_PATH AND IMESH_LIBRARIES)
+endif (IMESH_CONFIG_CURRENT AND IMESH_INCLUDE_DIRS AND IMESH_LIBRARIES)
 
 set (IMESH_DEFS_FILE ${IMESH_DEFS_FILE} CACHE FILEPATH "iMesh makefile include")
 
 include (FindPackageHandleStandardArgs)
 find_package_handle_standard_args (iMesh
   "iMesh could not be found.  Be sure to set IMESH_DEFS_FILE or have IMESH_DIR in your environment."
-  IMESH_INCLUDE_PATH IMESH_LIBRARIES)
+  IMESH_INCLUDE_DIRS IMESH_LIBRARIES)
 
-mark_as_advanced (IMESH_INCLUDE_PATH IMESH_LIBRARIES)
+mark_as_advanced (IMESH_INCLUDE_DIRS IMESH_LIBRARIES)

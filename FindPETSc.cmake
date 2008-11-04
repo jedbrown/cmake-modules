@@ -2,7 +2,7 @@
 # Once done this will define
 #
 #  PETSC_FOUND - system has PETSc
-#  PETSC_INCLUDE_PATH - the PETSc include directories
+#  PETSC_INCLUDE_DIRS - the PETSc include directories
 #  PETSC_LIBRARIES - Link these to use PETSc
 #  PETSC_COMPILER - Compiler used by PETSc
 #  PETSC_DEFINITIONS - Compiler switches required for using PETSc
@@ -33,7 +33,7 @@ endif (NOT PETSC_DIR)
 
 # The configuration is current if both PETSC_DIR and PETSC_ARCH are
 # equal to their saved values.  On the first pass, these will match if
-# nothing is in the environment, this is okay since PETSC_INCLUDE_PATH
+# nothing is in the environment, this is okay since PETSC_INCLUDE_DIRS
 # and PETSC_LIBRARIES are unset.
 set (PETSC_CONFIG_CURRENT TRUE)
 if (NOT "${PETSC_DIR}" STREQUAL "${PETSC_DIR_PRIVATE}")
@@ -53,7 +53,7 @@ else (EXISTS ${PETSC_DIR}/bmake/${PETSC_ARCH}/petscconf.h)
   # The layout is not recognized, how can we give a meaningful warning?
 endif (EXISTS ${PETSC_DIR}/${PETSC_ARCH}/include/petscconf.h)
 
-if (PETSC_CONFIG_CURRENT AND PETSC_INCLUDE_PATH AND PETSC_LIBRARIES)
+if (PETSC_CONFIG_CURRENT AND PETSC_INCLUDE_DIRS AND PETSC_LIBRARIES)
   # Do nothing: all variables are in cache
 elseif (PETSC_DIR AND PETSC_ARCH AND CMAKE_MAKE_PROGRAM AND PETSC_CONF_BASE)
   set (PETSC_DIR_PRIVATE ${PETSC_DIR} CACHE INTERNAL "Saved value" FORCE)
@@ -109,14 +109,14 @@ show_mpiexec :
   file (REMOVE ${PETSC_CONFIG_MAKEFILE})
 
   # Extract include paths from compile command line
-  string (REGEX MATCHALL "-I([^\" ]+|\"[^\"]+\")" PETSC_ALL_INCLUDE_PATHS "${PETSC_CPP_LINE}")
-  set (PETSC_INCLUDE_PATH_WORK)
-  foreach (IPATH ${PETSC_ALL_INCLUDE_PATHS})
+  string (REGEX MATCHALL "-I([^\" ]+|\"[^\"]+\")" PETSC_ALL_INCLUDE_DIRSS "${PETSC_CPP_LINE}")
+  set (PETSC_INCLUDE_DIRS_WORK)
+  foreach (IPATH ${PETSC_ALL_INCLUDE_DIRSS})
     string (REGEX REPLACE "^-I" "" IPATH ${IPATH})
     string (REGEX REPLACE "//" "/" IPATH ${IPATH})
-    list (APPEND PETSC_INCLUDE_PATH_WORK ${IPATH})
+    list (APPEND PETSC_INCLUDE_DIRS_WORK ${IPATH})
   endforeach (IPATH)
-  list (REMOVE_DUPLICATES PETSC_INCLUDE_PATH_WORK)
+  list (REMOVE_DUPLICATES PETSC_INCLUDE_DIRS_WORK)
 
   string (REGEX MATCHALL "(-L|-Wl,|-l)([^\" ]+|\"[^\"]+\")" PETSC_ALL_LINK_TOKENS "${PETSC_LIB_LINE}")
   set (PETSC_LINK_PATHS)
@@ -155,10 +155,10 @@ show_mpiexec :
 
   # Sometimes this can be used to assist FindMPI.cmake
   set (PETSC_MPIEXEC ${PETSC_MPIEXEC} CACHE FILEPATH "Executable for running PETSc MPI programs")
-  set (PETSC_INCLUDE_PATH ${PETSC_INCLUDE_PATH_WORK} CACHE STRING "PETSc include path" FORCE)
+  set (PETSC_INCLUDE_DIRS ${PETSC_INCLUDE_DIRS_WORK} CACHE STRING "PETSc include path" FORCE)
   set (PETSC_LIBRARIES ${PETSC_LIBRARIES_FOUND} CACHE STRING "PETSc libraries" FORCE)
   set (PETSC_COMPILER ${PETSC_CC} CACHE FILEPATH "PETSc compiler" FORCE)
-endif (PETSC_CONFIG_CURRENT AND PETSC_INCLUDE_PATH AND PETSC_LIBRARIES)
+endif (PETSC_CONFIG_CURRENT AND PETSC_INCLUDE_DIRS AND PETSC_LIBRARIES)
 
 set (PETSC_DIR ${PETSC_DIR} CACHE PATH "PETSc Directory")
 set (PETSC_ARCH ${PETSC_ARCH} CACHE STRING "PETSc build architecture")
@@ -166,7 +166,7 @@ set (PETSC_ARCH ${PETSC_ARCH} CACHE STRING "PETSc build architecture")
 include (FindPackageHandleStandardArgs)
 find_package_handle_standard_args (PETSc
   "PETSc could not be found.  Be sure to set PETSC_DIR and PETSC_ARCH."
-  PETSC_INCLUDE_PATH PETSC_LIBRARIES)
+  PETSC_INCLUDE_DIRS PETSC_LIBRARIES)
 
-# show the PETSC_INCLUDE_PATH and PETSC_LIBRARIES variables only in the advanced view
-mark_as_advanced (PETSC_INCLUDE_PATH PETSC_LIBRARIES PETSC_COMPILER PETSC_DEFINITIONS PETSC_MPIEXEC)
+# show the PETSC_INCLUDE_DIRS and PETSC_LIBRARIES variables only in the advanced view
+mark_as_advanced (PETSC_INCLUDE_DIRS PETSC_LIBRARIES PETSC_COMPILER PETSC_DEFINITIONS PETSC_MPIEXEC)
