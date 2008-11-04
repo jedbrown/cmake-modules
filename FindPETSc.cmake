@@ -109,9 +109,9 @@ show_mpiexec :
   file (REMOVE ${PETSC_CONFIG_MAKEFILE})
 
   # Extract include paths from compile command line
-  string (REGEX MATCHALL "-I([^\" ]+|\"[^\"]+\")" PETSC_ALL_INCLUDE_DIRSS "${PETSC_CPP_LINE}")
+  string (REGEX MATCHALL "-I([^\" ]+|\"[^\"]+\")" PETSC_ALL_INCLUDE_DIRS "${PETSC_CPP_LINE}")
   set (PETSC_INCLUDE_DIRS_WORK)
-  foreach (IPATH ${PETSC_ALL_INCLUDE_DIRSS})
+  foreach (IPATH ${PETSC_ALL_INCLUDE_DIRS})
     string (REGEX REPLACE "^-I" "" IPATH ${IPATH})
     string (REGEX REPLACE "//" "/" IPATH ${IPATH})
     list (APPEND PETSC_INCLUDE_DIRS_WORK ${IPATH})

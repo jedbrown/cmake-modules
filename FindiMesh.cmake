@@ -57,9 +57,9 @@ show_libs :
   file (REMOVE ${IMESH_CONFIG_MAKEFILE})
 
   # collect the includes and strip
-  string (REGEX MATCHALL "-I([^\" ]+|\"[^\"]+\")" IMESH_ALL_INCLUDE_DIRSS "${IMESH_INCLUDES_LINE}")
+  string (REGEX MATCHALL "-I([^\" ]+|\"[^\"]+\")" IMESH_ALL_INCLUDE_DIRS "${IMESH_INCLUDES_LINE}")
   set (IMESH_INCLUDE_DIRS_WORK)
-  foreach (IPATH ${IMESH_ALL_INCLUDE_DIRSS})
+  foreach (IPATH ${IMESH_ALL_INCLUDE_DIRS})
     string (REGEX REPLACE "^-I" "" IPATH ${IPATH})
     string (REGEX REPLACE "//" "/" IPATH ${IPATH})
     list (APPEND IMESH_INCLUDE_DIRS_WORK ${IPATH})
