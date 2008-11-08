@@ -20,7 +20,7 @@
 #    if (NOT foo_current)
 #      # Make temporary files, run programs, etc, to determine FOO_INCLUDES and FOO_LIBRARIES
 #    endif (NOT foo_current)
-#      
+#
 # MULTIPASS_C_SOURCE_RUNS (Name INCLUDES LIBRARIES SOURCE RUNS)
 #  Always runs the given test, use this when you need to re-run tests
 #  because parent variables have made old cache entries stale.

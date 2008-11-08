@@ -14,7 +14,7 @@ find_path (FFTW_INCLUDES fftw3.h)
 
 find_library (FFTW_LIBRARIES NAMES fftw3)
 
-# handle the QUIETLY and REQUIRED arguments and set FFTW_FOUND to TRUE if 
+# handle the QUIETLY and REQUIRED arguments and set FFTW_FOUND to TRUE if
 # all listed variables are TRUE
 include (FindPackageHandleStandardArgs)
 find_package_handle_standard_args (FFTW DEFAULT_MSG FFTW_LIBRARIES FFTW_INCLUDES)

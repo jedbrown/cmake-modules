@@ -15,7 +15,7 @@ find_path (GSL_INCLUDES gsl/gsl_math.h)
 
 find_library (GSL_LIBRARIES NAMES gsl)
 
-# handle the QUIETLY and REQUIRED arguments and set GSL_FOUND to TRUE if 
+# handle the QUIETLY and REQUIRED arguments and set GSL_FOUND to TRUE if
 # all listed variables are TRUE
 include (FindPackageHandleStandardArgs)
 find_package_handle_standard_args (GSL DEFAULT_MSG GSL_LIBRARIES GSL_INCLUDES)
