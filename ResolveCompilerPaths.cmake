@@ -53,7 +53,7 @@ macro (RESOLVE_LIBRARIES LIBS LINK_LINE)
       # It's a library, resolve the path by looking in the stack and then (by default) in system directories
       string (REGEX REPLACE "^-l" "" token ${token})
       set (_root)
-      if (token MATCHES "^/")
+      if (token MATCHES "^/")	# We have an absolute path, add root to the search path
 	set (_root "/")
       endif (token MATCHES "^/")
       set (_lib "NOTFOUND" CACHE FILEPATH "Cleared" FORCE)
