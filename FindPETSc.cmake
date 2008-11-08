@@ -1,12 +1,12 @@
 # - Try to find PETSc
 # Once done this will define
 #
-#  PETSC_FOUND - system has PETSc
-#  PETSC_INCLUDES - the PETSc include directories
-#  PETSC_LIBRARIES - Link these to use PETSc
-#  PETSC_COMPILER - Compiler used by PETSc
-#  PETSC_DEFINITIONS - Compiler switches required for using PETSc
-#  PETSC_MPIEXEC - Executable for running MPI programs
+#  PETSC_FOUND        - system has PETSc
+#  PETSC_INCLUDES     - the PETSc include directories
+#  PETSC_LIBRARIES    - Link these to use PETSc
+#  PETSC_COMPILER     - Compiler used by PETSc, helpful to find a compatible MPI
+#  PETSC_DEFINITIONS  - Compiler switches for using PETSc
+#  PETSC_MPIEXEC      - Executable for running MPI programs
 #
 # Setting these changes the behavior of the search
 #  PETSC_DIR - directory in which PETSc resides
@@ -46,8 +46,6 @@ include (FindPackageMultipass)
 find_package_multipass (PETSc petsc_config_current
   STATES DIR ARCH
   DEPENDENTS INCLUDES LIBRARIES COMPILER MPIEXEC ${petsc_slaves})
-
-message (STATUS "petsc_config_current = ${petsc_config_current}, includes = ${PETSC_INCLUDES}")
 
 # Determine whether the PETSc layout is old-style (through 2.3.3) or
 # new-style (not yet released, petsc-dev)
@@ -113,21 +111,7 @@ show :
 
   include (CheckCSourceRuns)
   macro (PETSC_TEST_RUNS includes libraries runs)
-    # This is a ridiculous hack.  CHECK_C_SOURCE_* thinks that if the
-    # *name* of the return variable doesn't change, then the test does
-    # not need to be re-run.  We keep an internal count which we
-    # increment to guarantee that every test name is unique.  If we've
-    # gotten here, then the configuration has changed enough that the
-    # test *needs* to be rerun.
-    if (NOT PETSC_TEST_COUNT)
-      set (PETSC_TEST_COUNT 00)
-    endif (NOT PETSC_TEST_COUNT)
-    math (EXPR _tmp "${PETSC_TEST_COUNT} + 1") # Why can't I add to a cache variable?
-    set (PETSC_TEST_COUNT ${_tmp} CACHE INTERNAL "Unique test ID")
-    set (testname PETSC_TEST_${PETSC_TEST_COUNT}_${runs})
-    set (CMAKE_REQUIRED_INCLUDES ${includes})
-    set (CMAKE_REQUIRED_LIBRARIES ${libraries})
-    check_c_source_runs ("
+    multipass_c_source_runs (PETSc "${includes}" "${libraries}" "
 static const char help[] = \"PETSc test program.\";
 #include \"petscts.h\"
 int main(int argc,char *argv[]) {
@@ -141,13 +125,11 @@ int main(int argc,char *argv[]) {
   ierr = PetscFinalize();CHKERRQ(ierr);
   PetscFunctionReturn(0);
 }
-" ${testname})
-    set (${runs} "${${testname}}")
+" ${runs})
     if (${${runs}})
       set (PETSC_EXECUTABLE_RUNS "YES" CACHE BOOL
 	"Can the system successfully run a PETSc executable?  This variable can be manually set to \"YES\" to force CMake to accept a given PETSc configuration, but this will almost always result in a broken build.  If you change PETSC_DIR, PETSC_ARCH, or PETSC_CURRENT you would have to reset this variable." FORCE)
     endif (${${runs}})
-    #set (${runs} "YES")
   endmacro (PETSC_TEST_RUNS)
 
   macro (PETSC_JOIN libs deps)

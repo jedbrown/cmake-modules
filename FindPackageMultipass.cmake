@@ -1,9 +1,9 @@
-# PackageMultipass - this module defines one function
+# PackageMultipass - this module defines two macros
 #
 # FIND_PACKAGE_MULTIPASS (Name CURRENT
 #  STATES VAR0 VAR1 ...
 #  DEPENDENTS DEP0 DEP1 ...)
-
+#
 #  This function creates a cache entry <UPPERCASED-Name>_CURRENT which
 #  the user can set to "NO" to trigger a reconfiguration of the package.
 #  The first time this function is called, the values of
@@ -21,6 +21,9 @@
 #      # Make temporary files, run programs, etc, to determine FOO_INCLUDES and FOO_LIBRARIES
 #    endif (NOT foo_current)
 #      
+# MULTIPASS_C_SOURCE_RUNS (Name INCLUDES LIBRARIES SOURCE RUNS)
+#  Always runs the given test, use this when you need to re-run tests
+#  because parent variables have made old cache entries stale.
 
 macro (FIND_PACKAGE_MULTIPASS _name _current)
   string (TOUPPER ${_name} _NAME)
@@ -61,5 +64,28 @@ macro (FIND_PACKAGE_MULTIPASS _name _current)
 	set (${_NAME}_${dep} "NOTFOUND" CACHE INTERNAL "Cleared" FORCE)
       endforeach (dep)
     endif (_cmd STREQUAL "DEPENDENTS")
+    set (${_NAME}_FOUND "NOTFOUND" CACHE INTERNAL "Cleared" FORCE)
   endif (NOT ${_current})
 endmacro (FIND_PACKAGE_MULTIPASS)
+
+
+macro (MULTIPASS_C_SOURCE_RUNS name includes libraries source runs)
+  include (CheckCSourceRuns)
+  string (TOUPPER ${name} _NAME)
+  # This is a ridiculous hack.  CHECK_C_SOURCE_* thinks that if the
+  # *name* of the return variable doesn't change, then the test does
+  # not need to be re-run.  We keep an internal count which we
+  # increment to guarantee that every test name is unique.  If we've
+  # gotten here, then the configuration has changed enough that the
+  # test *needs* to be rerun.
+  if (NOT MULTIPASS_TEST_COUNT)
+    set (MULTIPASS_TEST_COUNT 00)
+  endif (NOT MULTIPASS_TEST_COUNT)
+  math (EXPR _tmp "${MULTIPASS_TEST_COUNT} + 1") # Why can't I add to a cache variable?
+  set (MULTIPASS_TEST_COUNT ${_tmp} CACHE INTERNAL "Unique test ID")
+  set (testname MULTIPASS_TEST_${MULTIPASS_TEST_COUNT}_${runs})
+  set (CMAKE_REQUIRED_INCLUDES ${includes})
+  set (CMAKE_REQUIRED_LIBRARIES ${libraries})
+  check_c_source_runs ("${source}" ${testname})
+  set (${runs} "${${testname}}")
+endmacro (MULTIPASS_C_SOURCE_RUNS)
