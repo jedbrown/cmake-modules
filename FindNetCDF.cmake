@@ -5,7 +5,7 @@
 #  NETCDF_LIBRARIES   - Link these libraries when using NetCDF
 #  NETCDF_FOUND       - True if NetCDF found including required interfaces (see below)
 #
-# Your package can require certain interfaces for NetCDF to be FOUND
+# Your package can require certain interfaces to be FOUND by setting these
 #
 #  NETCDF_CXX         - require the C++ interface and link the C++ library
 #  NETCDF_F77         - require the F77 interface and link the fortran library
@@ -15,13 +15,19 @@
 # NETCDF_LIBRARIES if the corresponding option above is set.
 #
 #  NETCDF_LIBRARIES_C    - Just the C interface
-#  NETCDF_LIBRARIES_CXX  - C++ interface
-#  NETCDF_LIBRARIES_F77  - Fortran 77 interface
-#  NETCDF_LIBRARIES_F90  - Fortran 90 interface
+#  NETCDF_LIBRARIES_CXX  - C++ interface, if available
+#  NETCDF_LIBRARIES_F77  - Fortran 77 interface, if available
+#  NETCDF_LIBRARIES_F90  - Fortran 90 interface, if available
+#
+# Normal usage would be:
+#  set (NETCDF_F90 "YES")
+#  find_package (NetCDF REQUIRED)
+#  target_link_libraries (uses_f90_interface ${NETCDF_LIBRARIES})
+#  target_link_libraries (only_uses_c_interface ${NETCDF_LIBRARIES_C})
 
 if (NETCDF_INCLUDES AND NETCDF_LIBRARIES)
   # Already in cache, be silent
-  set (NetCDF_FIND_QUIETLY TRUE)
+  set (NETCDF_FIND_QUIETLY TRUE)
 endif (NETCDF_INCLUDES AND NETCDF_LIBRARIES)
 
 find_path (NETCDF_INCLUDES netcdf.h)
@@ -56,7 +62,7 @@ NetCDF_check_interface (F90 netcdf.mod  netcdff)
 
 set (NETCDF_LIBRARIES "${NetCDF_libs}" CACHE STRING "All NetCDF libraries required for interface level")
 
-# handle the QUIETLY and REQUIRED arguments and set NETCDF_FOUND to TRUE if 
+# handle the QUIETLY and REQUIRED arguments and set NETCDF_FOUND to TRUE if
 # all listed variables are TRUE
 include (FindPackageHandleStandardArgs)
 find_package_handle_standard_args (NetCDF DEFAULT_MSG NETCDF_LIBRARIES NETCDF_INCLUDES NetCDF_has_interfaces)
