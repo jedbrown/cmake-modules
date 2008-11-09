@@ -31,7 +31,7 @@ if (PETSC_DIR AND NOT PETSC_ARCH)
     if (NOT PETSC_ARCH)
       find_path (petscconf petscconf.h
 	HINTS ${PETSC_DIR}
-	PATH_SUFFIXES ${arch}/include bmake/${arch}/include
+	PATH_SUFFIXES ${arch}/include bmake/${arch}
 	NO_DEFAULT_PATH)
       if (petscconf)
 	set (PETSC_ARCH "${arch}" CACHE STRING "PETSc build architecture")
@@ -144,7 +144,7 @@ int main(int argc,char *argv[]) {
   petsc_join (ALL  TS)
 
   find_path (PETSC_INCLUDE_DIR petscts.h HINTS "${PETSC_DIR}" PATH_SUFFIXES include NO_DEFAULT_PATH)
-  find_path (PETSC_INCLUDE_CONF petscconf.h HINTS "${PETSC_DIR}" PATH_SUFFIXES "${PETSC_ARCH}/include" "bmake/${PETSC_ARCH}/include" NO_DEFAULT_PATH)
+  find_path (PETSC_INCLUDE_CONF petscconf.h HINTS "${PETSC_DIR}" PATH_SUFFIXES "${PETSC_ARCH}/include" "bmake/${PETSC_ARCH}" NO_DEFAULT_PATH)
   mark_as_advanced (PETSC_INCLUDE_DIR PETSC_INCLUDE_CONF)
   set (petsc_includes_minimal ${PETSC_INCLUDE_CONF} ${PETSC_INCLUDE_DIR})
 

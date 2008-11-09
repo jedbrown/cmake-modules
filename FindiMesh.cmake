@@ -56,7 +56,7 @@ show :
   imesh_get_variable (IMESH_INCLUDEDIR   imesh_includedir)
   imesh_get_variable (IMESH_LIBDIR       imesh_libdir)
   imesh_get_variable (IMESH_LIBS         imesh_libs_extra)
-  #file (REMOVE ${imesh_config_makefile})
+  file (REMOVE ${imesh_config_makefile})
 
   # Confirm that iMesh.h is really there
   find_path (imesh_includes_tmp iMesh.h HINTS ${imesh_includedir} NO_DEFAULT_PATH)
