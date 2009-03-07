@@ -120,7 +120,7 @@ show :
 
   include (CheckCSourceRuns)
   macro (PETSC_TEST_RUNS includes libraries runs)
-    multipass_c_source_runs (PETSc "${includes}" "${libraries}" "
+    multipass_c_source_runs ("${includes}" "${libraries}" "
 static const char help[] = \"PETSc test program.\";
 #include \"petscts.h\"
 int main(int argc,char *argv[]) {
