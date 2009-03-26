@@ -58,20 +58,21 @@ macro (ITAPS_TEST_RUNS component name includes libraries program runs)
   # message (STATUS "Starting run test: ${includes} ${libraries} ${runs}")
   multipass_c_source_runs ("${includes}" "${libraries}" "${program}" ${runs})
   if (NOT ITAPS_${component}_EXECUTABLE_RUNS)
-    set (ITAPS_${component}_EXECUTABLE_RUNS "${runs}" CACHE BOOL
+    set (ITAPS_${component}_EXECUTABLE_RUNS "${${runs}}" CACHE BOOL
       "Can the system successfully run an ${name} executable?  This variable can be manually set to \"YES\" to force CMake to accept a given configuration, but this will almost always result in a broken build." FORCE)
   endif ()
 endmacro (ITAPS_TEST_RUNS)
 
 macro (ITAPS_REQUIRED_LIBS component name includes libraries_all program libraries_required)
+  # message (STATUS "trying program: ${program}")
   resolve_libraries (_all_libraries "${libraries_all}")
   list (GET _all_libraries 0 _first_library)
-  itaps_test_runs (${component} ${name} "${includes}" "${_first_library}" "${program}" ${name}_works_minimal)
+  itaps_test_runs (${component} ${name} "${includes}" "${_first_library};${itaps_rel_libs}" "${program}" ${name}_works_minimal)
   if (${name}_works_minimal)
     set (${libraries_required} "${_first_library}")
     message (STATUS "${name} executable works when only linking to the interface lib, this probably means you have shared libs.")
   else ()
-    itaps_test_runs (${component} ${name} "${includes}" "${_all_libraries}" "${itaps_mesh_program}" ${name}_works_extra)
+    itaps_test_runs (${component} ${name} "${includes}" "${_all_libraries};${itaps_rel_libs}" "${itaps_mesh_program}" ${name}_works_extra)
     if (${name}_works_extra)
       set (${libraries_required} "${_all_libraries}")
       message (STATUS "${name} executable requires linking to extra libs, this probably means it's statically linked.")
@@ -124,31 +125,36 @@ else ()
 endif ()
 set (imesh_include_tmp "NOTFOUND" CACHE INTERNAL "Cleared" FORCE)
 
+set (itaps_rel_libs)		# Extra libraries which should only be set when linking with iRel
+
 itaps_handle_component (GEOM iGeom "
 /* iGeom test program */
 #include \"iGeom.h\"
 #define CHK(err) if (err) return 1
 int main() {
   int ierr;
-  iGeom_instance g;
-  iGeom_newGeom(\"\",&g,&err,0);CHK(err);
-  iGeom_dtor(g,&err);CHK(err);
+  iGeom_Instance g;
+  iGeom_newGeom(\"\",&g,&ierr,0);CHK(ierr);
+  iGeom_dtor(g,&ierr);CHK(ierr);
   return 0;
 }
 ")
 
-itaps_handle_component (REL iRel "
+if (ITAPS_MESH_FOUND AND ITAPS_GEOM_FOUND) # iRel only makes sense if iMesh and iGeom are found
+  set (itaps_rel_libs "${ITAPS_MESH_LIBRARIES}" "${ITAPS_GEOM_LIBRARIES}")
+  itaps_handle_component (REL iRel "
 /* iRel test program */
 #include \"iRel.h\"
 #define CHK(err) if (err) return 1
 int main() {
   int ierr;
-  iRel_instance rel;
-  iRel_newAssoc(\"\",&rel,&err,0);CHK(err);
-  iRel_dtor(rel,&err);CHK(err);
+  iRel_Instance rel;
+  iRel_newAssoc(\"\",&rel,&ierr,0);CHK(ierr);
+  iRel_dtor(rel,&ierr);CHK(ierr);
   return 0;
 }
 ")
+endif ()
 
 set (ITAPS_INCLUDES)
 set (ITAPS_LIBRARIES)
@@ -161,6 +167,8 @@ foreach (component REL GEOM MESH)
   endif ()
   message (STATUS "ITAPS_${component}: ${ITAPS_${component}_INCLUDES} ${ITAPS_${component}_LIBRARIES}")
 endforeach()
+list (REMOVE_DUPLICATES ITAPS_INCLUDES)
+list (REMOVE_DUPLICATES ITAPS_LIBRARIES)
 
 set (ITAPS_FOUND_REQUIRED_COMPONENTS YES)
 if (ITAPS_FIND_REQUIRED)
