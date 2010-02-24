@@ -114,7 +114,7 @@ show :
     set (PETSC_LIBRARIES_${suffix} "${PETSC_LIBRARY_${suffix}}")
     mark_as_advanced (PETSC_LIBRARY_${suffix})
   endmacro (PETSC_FIND_LIBRARY suffix name)
-  petsc_find_library (SYS  petsc)
+  petsc_find_library (SYS  petscsys)
   petsc_find_library (VEC  petscvec)
   petsc_find_library (MAT  petscmat)
   petsc_find_library (DM   petscdm)
