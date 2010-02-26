@@ -192,8 +192,12 @@ int main(int argc,char *argv[]) {
     endif (petsc_works_allincludes)
   endif (petsc_works_minimal)
 
-  # We do an out-of-source build so __FILE__ will be an absolute path, hence __SDIR__ is superfluous
-  set (PETSC_DEFINITIONS "-D__SDIR__=\"\"" CACHE STRING "PETSc definitions" FORCE)
+  # We do an out-of-source build so __FILE__ will be an absolute path, hence __INSDIR__ is superfluous
+  if (${PETSC_VERSION} VERSION_LESS 3.1)
+    set (PETSC_DEFINITIONS "-D__SDIR__=\"\"" CACHE STRING "PETSc definitions" FORCE)
+  else ()
+    set (PETSC_DEFINITIONS "-D__INSDIR__" CACHE STRING "PETSc definitions" FORCE)
+  endif ()
   # Sometimes this can be used to assist FindMPI.cmake
   set (PETSC_MPIEXEC ${petsc_mpiexec} CACHE FILEPATH "Executable for running PETSc MPI programs" FORCE)
   set (PETSC_INCLUDES ${petsc_includes_needed} CACHE STRING "PETSc include path" FORCE)
