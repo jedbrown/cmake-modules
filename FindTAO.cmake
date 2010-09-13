@@ -13,5 +13,7 @@ IF(EXISTS ${TAO_DIR}/include/tao.h)
   FILE(GLOB TAO_LIBRARIES RELATIVE "${TAO_DIR}/lib" "${TAO_DIR}/lib/libtao*.a")
 ELSE(EXISTS ${TAO_DIR}/include/tao.h)
   SET(TAO_FOUND No)
-  message(FATAL_ERROR "Cannot find TAO!")
 ENDIF(EXISTS ${TAO_DIR}/include/tao.h)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(TAO DEFAULT_MSG TAO_LIBRARIES TAO_INCLUDES)
