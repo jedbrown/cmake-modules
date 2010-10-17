@@ -229,7 +229,7 @@ int main(int argc,char *argv[]) {
   if (${PETSC_VERSION} VERSION_LESS 3.1)
     set (PETSC_DEFINITIONS "-D__SDIR__=\"\"" CACHE STRING "PETSc definitions" FORCE)
   else ()
-    set (PETSC_DEFINITIONS "-D__INSDIR__" CACHE STRING "PETSc definitions" FORCE)
+    set (PETSC_DEFINITIONS "-D__INSDIR__=" CACHE STRING "PETSc definitions" FORCE)
   endif ()
   # Sometimes this can be used to assist FindMPI.cmake
   set (PETSC_MPIEXEC ${petsc_mpiexec} CACHE FILEPATH "Executable for running PETSc MPI programs" FORCE)
