@@ -37,6 +37,8 @@ include (ResolveCompilerPaths)
 include (CheckCSourceRuns)
 include (FindPackageHandleStandardArgs)
 
+find_program (MAKE_EXECUTABLE NAMES make gmake)
+
 macro (ITAPS_PREPARE_COMPONENT component name)
   find_file (ITAPS_${component}_DEFS_FILE ${name}-Defs.inc
     HINTS ENV I${component}_DIR
@@ -49,7 +51,7 @@ endmacro ()
 
 macro (ITAPS_GET_VARIABLE makefile name var)
   set (${var} "NOTFOUND" CACHE INTERNAL "Cleared" FORCE)
-  execute_process (COMMAND ${CMAKE_MAKE_PROGRAM} -f ${${makefile}} show VARIABLE=${name}
+  execute_process (COMMAND ${MAKE_EXECUTABLE} -f ${${makefile}} show VARIABLE=${name}
     OUTPUT_VARIABLE ${var}
     RESULT_VARIABLE itaps_return)
 endmacro (ITAPS_GET_VARIABLE)
