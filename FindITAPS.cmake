@@ -151,7 +151,7 @@ if (ITAPS_MESH_FOUND AND ITAPS_GEOM_FOUND) # iRel only makes sense if iMesh and 
 int main() {
   int ierr;
   iRel_Instance rel;
-  iRel_newAssoc(\"\",&rel,&ierr,0);CHK(ierr);
+  iRel_newRel(\"\",&rel,&ierr,0);CHK(ierr);
   iRel_dtor(rel,&ierr);CHK(ierr);
   return 0;
 }
