@@ -170,6 +170,11 @@ show :
 
   include (CheckCSourceRuns)
   macro (PETSC_TEST_RUNS includes libraries runs)
+    if (PETSC_VERSION VERSION_GREATER 3.1)
+      set (_PETSC_TSDestroy "TSDestroy(&ts)")
+    else ()
+      set (_PETSC_TSDestroy "TSDestroy(ts)")
+    endif ()
     multipass_c_source_runs ("${includes}" "${libraries}" "
 static const char help[] = \"PETSc test program.\";
 #include \"petscts.h\"
@@ -180,7 +185,7 @@ int main(int argc,char *argv[]) {
   ierr = PetscInitialize(&argc,&argv,0,help);CHKERRQ(ierr);
   ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRQ(ierr);
   ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
-  ierr = TSDestroy(ts);CHKERRQ(ierr);
+  ierr = ${_PETSC_TSDestroy};CHKERRQ(ierr);
   ierr = PetscFinalize();CHKERRQ(ierr);
   return 0;
 }
