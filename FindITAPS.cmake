@@ -103,8 +103,8 @@ show :
     itaps_required_libs ("${component}" "${name}" "${ITAPS_${component}_INCLUDES}" "${itaps_libs}" "${program}" itaps_${component}_required_libraries)
     set (ITAPS_${component}_LIBRARIES "${itaps_${component}_required_libraries}" CACHE STRING "Libraries for ${name}")
     mark_as_advanced (ITAPS_${component}_EXECUTABLE_RUNS ITAPS_${component}_LIBRARIES)
-    set (ITAPS_${component}_FOUND "${ITAPS_${component}_EXECUTABLE_RUNS}")
   endif()
+  set (ITAPS_${component}_FOUND "${ITAPS_${component}_EXECUTABLE_RUNS}")
 endmacro()
 
 itaps_handle_component (MESH iMesh "
