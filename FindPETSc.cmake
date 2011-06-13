@@ -177,7 +177,7 @@ show :
     endif ()
     multipass_c_source_runs ("${includes}" "${libraries}" "
 static const char help[] = \"PETSc test program.\";
-#include \"petscts.h\"
+#include <petscts.h>
 int main(int argc,char *argv[]) {
   PetscErrorCode ierr;
   TS ts;

@@ -109,7 +109,7 @@ endmacro()
 
 itaps_handle_component (MESH iMesh "
 /* iMesh test program */
-#include \"iMesh.h\"
+#include <iMesh.h>
 #define CHK(err) if (err) return 1
 int main(int argc,char *argv[]) {
   int err;
@@ -131,7 +131,7 @@ set (itaps_rel_libs)		# Extra libraries which should only be set when linking wi
 
 itaps_handle_component (GEOM iGeom "
 /* iGeom test program */
-#include \"iGeom.h\"
+#include <iGeom.h>
 #define CHK(err) if (err) return 1
 int main() {
   int ierr;
@@ -146,7 +146,7 @@ if (ITAPS_MESH_FOUND AND ITAPS_GEOM_FOUND) # iRel only makes sense if iMesh and 
   set (itaps_rel_libs "${ITAPS_MESH_LIBRARIES}" "${ITAPS_GEOM_LIBRARIES}")
   itaps_handle_component (REL iRel "
 /* iRel test program */
-#include \"iRel.h\"
+#include <iRel.h>
 #define CHK(err) if (err) return 1
 int main() {
   int ierr;
