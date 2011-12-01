@@ -89,3 +89,23 @@ macro (MULTIPASS_C_SOURCE_RUNS includes libraries source runs)
   check_c_source_runs ("${source}" ${testname})
   set (${runs} "${${testname}}")
 endmacro (MULTIPASS_C_SOURCE_RUNS)
+
+macro (MULTIPASS_CXX_SOURCE_RUNS includes libraries source runs)
+  include (CheckCXXSourceRuns)
+  # This is a ridiculous hack.  CHECK_CXX_SOURCE_* thinks that if the
+  # *name* of the return variable doesn't change, then the test does
+  # not need to be re-run.  We keep an internal count which we
+  # increment to guarantee that every test name is unique.  If we've
+  # gotten here, then the configuration has changed enough that the
+  # test *needs* to be rerun.
+  if (NOT MULTIPASS_TEST_COUNT)
+    set (MULTIPASS_TEST_COUNT 00)
+  endif (NOT MULTIPASS_TEST_COUNT)
+  math (EXPR _tmp "${MULTIPASS_TEST_COUNT} + 1") # Why can't I add to a cache variable?
+  set (MULTIPASS_TEST_COUNT ${_tmp} CACHE INTERNAL "Unique test ID")
+  set (testname MULTIPASS_TEST_${MULTIPASS_TEST_COUNT}_${runs})
+  set (CMAKE_REQUIRED_INCLUDES ${includes})
+  set (CMAKE_REQUIRED_LIBRARIES ${libraries})
+  check_cxx_source_runs ("${source}" ${testname})
+  set (${runs} "${${testname}}")
+endmacro (MULTIPASS_CXX_SOURCE_RUNS)
