@@ -9,8 +9,10 @@
 #  PETSC_MPIEXEC      - Executable for running MPI programs
 #  PETSC_VERSION      - Version string (MAJOR.MINOR.SUBMINOR)
 #
-#  Hack: PETSC_VERSION currently decides on the version based on the
-#  layout.  Otherwise we need to run C code to determine the version.
+#  Usage:
+#  find_package(PETSc COMPONENTS CXX)  - required if build --with-clanguage=C++ --with-c-support=0
+#  find_package(PETSc COMPONENTS C)    - standard behavior of checking build using a C compiler
+#  find_package(PETSc)                 - same as above
 #
 # Setting these changes the behavior of the search
 #  PETSC_DIR - directory in which PETSc resides
