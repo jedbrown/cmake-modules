@@ -196,66 +196,41 @@ show :
     message (STATUS "Recognized PETSc install with single library for all packages")
   endif ()
 
-  # Check to see if we are doing a C source test
-  if(${PETSC_LANGUAGE_BINDINGS} STREQUAL "C")
-    include (CheckCSourceRuns)
-    macro (PETSC_TEST_RUNS includes libraries runs)
-      if (PETSC_VERSION VERSION_GREATER 3.1)
-	set (_PETSC_TSDestroy "TSDestroy(&ts)")
-      else ()
-	set (_PETSC_TSDestroy "TSDestroy(ts)")
-      endif ()
-      multipass_c_source_runs ("${includes}" "${libraries}" "
+  include(Check${PETSC_LANGUAGE_BINDINGS}SourceRuns)
+  macro (PETSC_TEST_RUNS includes libraries runs)
+    if(${PETSC_LANGUAGE_BINDINGS} STREQUAL "C")
+      set(_PETSC_ERR_FUNC "CHKERRQ(ierr)")
+    elseif(${PETSC_LANGUAGE_BINDINGS} STREQUAL "CXX")
+      set(_PETSC_ERR_FUNC "CHKERRXX(ierr)")
+    endif()
+    if (PETSC_VERSION VERSION_GREATER 3.1)
+      set (_PETSC_TSDestroy "TSDestroy(&ts)")
+    else ()
+      set (_PETSC_TSDestroy "TSDestroy(ts)")
+    endif ()
+    
+    set(_PETSC_TEST_SOURCE "
 static const char help[] = \"PETSc test program.\";
 #include <petscts.h>
 int main(int argc,char *argv[]) {
   PetscErrorCode ierr;
   TS ts;
 
-  ierr = PetscInitialize(&argc,&argv,0,help);CHKERRQ(ierr);
-  ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRQ(ierr);
-  ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
-  ierr = ${_PETSC_TSDestroy};CHKERRQ(ierr);
-  ierr = PetscFinalize();CHKERRQ(ierr);
+  ierr = PetscInitialize(&argc,&argv,0,help);${_PETSC_ERR_FUNC};
+  ierr = TSCreate(PETSC_COMM_WORLD,&ts);${_PETSC_ERR_FUNC};
+  ierr = TSSetFromOptions(ts);${_PETSC_ERR_FUNC};
+  ierr = ${_PETSC_TSDestroy};${_PETSC_ERR_FUNC};
+  ierr = PetscFinalize();${_PETSC_ERR_FUNC};
   return 0;
 }
-" ${runs})
-      if (${${runs}})
-	set (PETSC_EXECUTABLE_RUNS "YES" CACHE BOOL
-	  "Can the system successfully run a PETSc executable?  This variable can be manually set to \"YES\" to force CMake to accept a given PETSc configuration, but this will almost always result in a broken build.  If you change PETSC_DIR, PETSC_ARCH, or PETSC_CURRENT you would have to reset this variable." FORCE)
-      endif (${${runs}})
-    endmacro (PETSC_TEST_RUNS)
-  endif()
+")
+    multipass_source_runs ("${includes}" "${libraries}" "${_PETSC_TEST_SOURCE}" ${runs} "${PETSC_LANGUAGE_BINDINGS}")
+    if (${${runs}})
+      set (PETSC_EXECUTABLE_RUNS "YES" CACHE BOOL
+	"Can the system successfully run a PETSc executable?  This variable can be manually set to \"YES\" to force CMake to accept a given PETSc configuration, but this will almost always result in a broken build.  If you change PETSC_DIR, PETSC_ARCH, or PETSC_CURRENT you would have to reset this variable." FORCE)
+    endif (${${runs}})
+  endmacro (PETSC_TEST_RUNS)
 
-  if(${PETSC_LANGUAGE_BINDINGS} STREQUAL "CXX")
-    include (CheckCXXSourceRuns)
-    macro (PETSC_TEST_RUNS includes libraries runs)
-      if (PETSC_VERSION VERSION_GREATER 3.1)
-	set (_PETSC_TSDestroy "TSDestroy(&ts)")
-      else ()
-	set (_PETSC_TSDestroy "TSDestroy(ts)")
-      endif ()
-      multipass_cxx_source_runs ("${includes}" "${libraries}" "
-static const char help[] = \"PETSc test program.\";
-#include <petscts.h>
-int main(int argc,char *argv[]) {
-  PetscErrorCode ierr;
-  TS ts;
-
-  ierr = PetscInitialize(&argc,&argv,0,help);CHKERRXX(ierr);
-  ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRXX(ierr);
-  ierr = TSSetFromOptions(ts);CHKERRXX(ierr);
-  ierr = ${_PETSC_TSDestroy};CHKERRXX(ierr);
-  ierr = PetscFinalize();CHKERRXX(ierr);
-  return 0;
-}
-" ${runs})
-      if (${${runs}})
-	set (PETSC_EXECUTABLE_RUNS "ON" CACHE BOOL
-	  "Can the system successfully run a PETSc executable?  This variable can be manually set to \"ON\" to force CMake to accept a given PETSc configuration, but this will almost always result in a broken build.  If you change PETSC_DIR, PETSC_ARCH, or PETSC_CURRENT you would have to reset this variable." FORCE)
-      endif (${${runs}})
-    endmacro (PETSC_TEST_RUNS)
-  endif()
 
   find_path (PETSC_INCLUDE_DIR petscts.h HINTS "${PETSC_DIR}" PATH_SUFFIXES include NO_DEFAULT_PATH)
   find_path (PETSC_INCLUDE_CONF petscconf.h HINTS "${PETSC_DIR}" PATH_SUFFIXES "${PETSC_ARCH}/include" "bmake/${PETSC_ARCH}" NO_DEFAULT_PATH)
