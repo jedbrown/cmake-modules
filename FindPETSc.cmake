@@ -149,6 +149,7 @@ show :
   petsc_get_variable (PETSC_CCPPFLAGS          petsc_cpp_line)
   petsc_get_variable (PETSC_INCLUDE            petsc_include)
   petsc_get_variable (PCC                      petsc_cc)
+  petsc_get_variable (PCC_FLAGS                petsc_cc_flags)
   petsc_get_variable (MPIEXEC                  petsc_mpiexec)
   # We are done with the temporary Makefile, calling PETSC_GET_VARIABLE after this point is invalid!
   file (REMOVE ${petsc_config_makefile})
@@ -157,11 +158,43 @@ show :
   # Extract include paths and libraries from compile command line
   resolve_includes (petsc_includes_all "${petsc_cpp_line}")
 
+  #on windows we need to make sure we're linking against the right
+  #runtime library
+  if (WIN32)
+    if (petsc_cc_flags MATCHES "-MT")
+      set(replaced_flag False)
+      foreach(flag_var
+          CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
+          CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO
+          CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+          CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+        if(${flag_var} MATCHES "/MD")
+          string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+          set(replaced_flag True)
+        endif(${flag_var} MATCHES "/MD")
+      endforeach(flag_var)
+      if(${replaced_flag} MATCHES "True")
+        message(WARNING "Overriding /MD with /MT.  This will likely result in the error
+         missing:  PETSC_EXECUTABLE_RUNS
+  However, the resulting makefiles may still work.  To fix this,
+  implement the first answer at 
+  http://www.cmake.org/Wiki/CMake_FAQ#How_can_I_build_my_MSVC_application_with_a_static_runtime.3F")
+      endif(${replaced_flag} MATCHES "True")
+    endif (petsc_cc_flags MATCHES "-MT")
+  endif (WIN32)
+
+  include (CorrectWindowsPaths)
+  convert_cygwin_path(petsc_lib_dir)
   message (STATUS "petsc_lib_dir ${petsc_lib_dir}")
 
   macro (PETSC_FIND_LIBRARY suffix name)
     set (PETSC_LIBRARY_${suffix} "NOTFOUND" CACHE INTERNAL "Cleared" FORCE) # Clear any stale value, if we got here, we need to find it again
-    find_library (PETSC_LIBRARY_${suffix} NAMES ${name} HINTS ${petsc_lib_dir} NO_DEFAULT_PATH)
+    if (WIN32)
+      set (libname lib${name}) #windows expects "libfoo", linux expects "foo"
+    else (WIN32)
+      set (libname ${name})
+    endif (WIN32)
+    find_library (PETSC_LIBRARY_${suffix} NAMES ${libname} HINTS ${petsc_lib_dir} NO_DEFAULT_PATH)
     set (PETSC_LIBRARIES_${suffix} "${PETSC_LIBRARY_${suffix}}")
     mark_as_advanced (PETSC_LIBRARY_${suffix})
   endmacro (PETSC_FIND_LIBRARY suffix name)
