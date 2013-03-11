@@ -41,7 +41,7 @@
 include (CorrectWindowsPaths)
 
 macro (RESOLVE_LIBRARIES LIBS LINK_LINE)
-  string (REGEX MATCHALL "((-L|-l|-Wl)([^\" ]+|\"[^\"]+\")|[^\" ]+(a|so|dll|lib))" _all_tokens "${LINK_LINE}")
+  string (REGEX MATCHALL "((-L|-l|-Wl)([^\" ]+|\"[^\"]+\")|[^\" ]+\\.(a|so|dll|lib))" _all_tokens "${LINK_LINE}")
   set (_libs_found)
   set (_directory_list)
   foreach (token ${_all_tokens})
@@ -51,7 +51,7 @@ macro (RESOLVE_LIBRARIES LIBS LINK_LINE)
       string (REGEX REPLACE "//" "/" token ${token})
       convert_cygwin_path(token)
       list (APPEND _directory_list ${token})
-    elseif (token MATCHES "^(-l([^\" ]+|\"[^\"]+\")|[^\" ]+(a|so|dll|lib))")
+    elseif (token MATCHES "^(-l([^\" ]+|\"[^\"]+\")|[^\" ]+\\.(a|so|dll|lib))")
       # It's a library, resolve the path by looking in the list and then (by default) in system directories
       if (WIN32) #windows expects "libfoo", linux expects "foo"
         string (REGEX REPLACE "^-l" "lib" token ${token})
@@ -61,7 +61,7 @@ macro (RESOLVE_LIBRARIES LIBS LINK_LINE)
       set (_root)
       if (token MATCHES "^/")	# We have an absolute path
         #separate into a path and a library name:
-        string (REGEX MATCH "[^/]*(a|so|dll|lib)$" libname ${token})
+        string (REGEX MATCH "[^/]*\\.(a|so|dll|lib)$" libname ${token})
         string (REGEX MATCH ".*[^${libname}$]" libpath ${token})
         convert_cygwin_path(libpath)
         set (_directory_list ${_directory_list} ${libpath})
