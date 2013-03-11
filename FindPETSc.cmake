@@ -162,24 +162,20 @@ show :
   #runtime library
   if (WIN32)
     if (petsc_cc_flags MATCHES "-MT")
-      set(replaced_flag False)
+      set(using_md False)
       foreach(flag_var
           CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
           CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO
           CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
           CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
         if(${flag_var} MATCHES "/MD")
-          string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-          set(replaced_flag True)
+          set(using_md True)
         endif(${flag_var} MATCHES "/MD")
       endforeach(flag_var)
-      if(${replaced_flag} MATCHES "True")
-        message(WARNING "Overriding /MD with /MT.  This will likely result in the error
-         missing:  PETSC_EXECUTABLE_RUNS
-  However, the resulting makefiles may still work.  To fix this,
-  implement the first answer at 
-  http://www.cmake.org/Wiki/CMake_FAQ#How_can_I_build_my_MSVC_application_with_a_static_runtime.3F")
-      endif(${replaced_flag} MATCHES "True")
+      if(${using_md} MATCHES "True")
+        message(WARNING "PETSc was built with /MT, but /MD is currently set.
+ See http://www.cmake.org/Wiki/CMake_FAQ#How_can_I_build_my_MSVC_application_with_a_static_runtime.3F")
+      endif(${using_md} MATCHES "True")
     endif (petsc_cc_flags MATCHES "-MT")
   endif (WIN32)
 
