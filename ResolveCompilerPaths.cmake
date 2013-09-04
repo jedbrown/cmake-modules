@@ -41,6 +41,8 @@
 include (CorrectWindowsPaths)
 
 macro (RESOLVE_LIBRARIES LIBS LINK_LINE)
+# JB
+#  string (REGEX MATCHALL "((-L|-l|-Wl)([^\" ]+|\"[^\"]+\")|/[^\" ]+(a|so|dll))" _all_tokens "${LINK_LINE}")
   string (REGEX MATCHALL "((-L|-l|-Wl)([^\" ]+|\"[^\"]+\")|[^\" ]+\\.(a|so|dll|lib))" _all_tokens "${LINK_LINE}")
   set (_libs_found)
   set (_directory_list)
@@ -52,6 +54,8 @@ macro (RESOLVE_LIBRARIES LIBS LINK_LINE)
       convert_cygwin_path(token)
       list (APPEND _directory_list ${token})
     elseif (token MATCHES "^(-l([^\" ]+|\"[^\"]+\")|[^\" ]+\\.(a|so|dll|lib))")
+    # JB
+    # elseif (token MATCHES "^(-l([^\" ]+|\"[^\"]+\")|/[^\" ]+(a|so|dll))")
       # It's a library, resolve the path by looking in the list and then (by default) in system directories
       if (WIN32) #windows expects "libfoo", linux expects "foo"
         string (REGEX REPLACE "^-l" "lib" token ${token})
@@ -66,6 +70,14 @@ macro (RESOLVE_LIBRARIES LIBS LINK_LINE)
         convert_cygwin_path(libpath)
         set (_directory_list ${_directory_list} ${libpath})
         set (token ${libname})
+# JB        
+#      if (token MATCHES "^/")	# We have an absolute path, add root to the search path
+#        # workaround for bug in find_library on cygwin (do not work for libraries given as full path)
+#        # doesn;t work with paths containing spaces
+#        STRING(REGEX REPLACE "^/[^ ]*/lib([^/ ]*).(a|so|dll)" "\\1" LIB_NAME ${token})
+#        STRING(REGEX REPLACE "(^/[^ ]*/)lib[^/ ]*.(a|so|dll)" "\\1" LIB_PATH ${token})
+#	set (_root ${LIB_PATH})
+#	set (token ${LIB_NAME})
       endif (token MATCHES "^/")
       set (_lib "NOTFOUND" CACHE FILEPATH "Cleared" FORCE)
       find_library (_lib ${token} HINTS ${_directory_list} ${_root})

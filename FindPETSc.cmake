@@ -1,22 +1,35 @@
 # - Try to find PETSc
+#
+# Accepts:
+# PETSC_ADDITIONAL_LIBS
+#
 # Once done this will define
 #
-#  PETSC_FOUND        - system has PETSc
-#  PETSC_INCLUDES     - the PETSc include directories
-#  PETSC_LIBRARIES    - Link these to use PETSc
-#  PETSC_COMPILER     - Compiler used by PETSc, helpful to find a compatible MPI
-#  PETSC_DEFINITIONS  - Compiler switches for using PETSc
-#  PETSC_MPIEXEC      - Executable for running MPI programs
-#  PETSC_VERSION      - Version string (MAJOR.MINOR.SUBMINOR)
+# PETSC_FOUND - system has PETSc
+# PETSC_INCLUDES - the PETSc include directories
+# PETSC_LIBRARIES - Link these to use PETSc
+# PETSC_COMPILER - Compiler used by PETSc, helpful to find a compatible MPI
+# PETSC_DEFINITIONS - Compiler switches for using PETSc
+# PETSC_MPIEXEC - Executable for running MPI programs
+# PETSC_VERSION - Version string (MAJOR.MINOR.SUBMINOR)
 #
-#  Usage:
-#  find_package(PETSc COMPONENTS CXX)  - required if build --with-clanguage=C++ --with-c-support=0
-#  find_package(PETSc COMPONENTS C)    - standard behavior of checking build using a C compiler
-#  find_package(PETSc)                 - same as above
+# PETSC_EXTERNAL_LIB   - CMake list of resolved (hopefully) external libraries linked by PETSC, 
+#                        in the case of static PETSC libraries this list is already included in PETSC_LIBRARIES
+# PETSC_VAR_XXX       - exported several variables from PETSC (to be used by other libraries)
+#                     XXX is one of:
+#
+# MPIFC_SHOW, MPICXX_SHOW,MPICC_SHOW, PCC,  CC_FLAGS, PCC_FLAGS, FC_FLAGS, CPP_FLAGS
+# METIS_INCLUDE, BLASLAPACK_INCLUDE, PARMETIS_INCLUDE, MUMPS_INCLUDE
+# MPI_LIB, MUMPS_LIB,  METIS_LIB, PARMETIS_LIB, BLASLAPACK_LIB, SCALAPACK_LIB 
+#
+# Usage:
+# find_package(PETSc COMPONENTS CXX) - required if build --with-clanguage=C++ --with-c-support=0
+# find_package(PETSc COMPONENTS C) - standard behavior of checking build using a C compiler
+# find_package(PETSc) - same as above
 #
 # Setting these changes the behavior of the search
-#  PETSC_DIR - directory in which PETSc resides
-#  PETSC_ARCH - build architecture
+# PETSC_DIR - directory in which PETSc resides
+# PETSC_ARCH - build architecture
 #
 # Redistribution and use is allowed according to the terms of the BSD license.
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
@@ -41,15 +54,15 @@ else()
     list(FIND PETSC_VALID_COMPONENTS ${component} component_location)
     if(${component_location} EQUAL -1)
       message(FATAL_ERROR "\"${component}\" is not a valid PETSc component.")
-    else()
-      list(APPEND PETSC_LANGUAGE_BINDINGS ${component})
-    endif()
-  endforeach()
+else()
+list(APPEND PETSC_LANGUAGE_BINDINGS ${component})
+endif()
+endforeach()
 endif()
 
 function (petsc_get_version)
-  if (EXISTS "${PETSC_DIR}/include/petscversion.h")
-    file (STRINGS "${PETSC_DIR}/include/petscversion.h" vstrings REGEX "#define PETSC_VERSION_(RELEASE|MAJOR|MINOR|SUBMINOR|PATCH) ")
+if (EXISTS "${PETSC_DIR}/include/petscversion.h")
+file (STRINGS "${PETSC_DIR}/include/petscversion.h" vstrings REGEX "#define PETSC_VERSION_(RELEASE|MAJOR|MINOR|SUBMINOR|PATCH) ")
     foreach (line ${vstrings})
       string (REGEX REPLACE " +" ";" fields ${line}) # break line into three fields (the first is always "#define")
       list (GET fields 1 var)
@@ -58,21 +71,30 @@ function (petsc_get_version)
       set (${var} ${val})         # Also in local scope so we have access below
     endforeach ()
     if (PETSC_VERSION_RELEASE)
-      set (PETSC_VERSION "${PETSC_VERSION_MAJOR}.${PETSC_VERSION_MINOR}.${PETSC_VERSION_SUBMINOR}p${PETSC_VERSION_PATCH}" PARENT_SCOPE)
+      set (PETSC_VERSION "${PETSC_VERSION_MAJOR}.${PETSC_VERSION_MINOR}.${PETSC_VERSION_SUBMINOR}p${PETSC_VERSION_PATCH}")
+      set (PETSC_VERSION "${PETSC_VERSION}" PARENT_SCOPE)
     else ()
       # make dev version compare higher than any patch level of a released version
-      set (PETSC_VERSION "${PETSC_VERSION_MAJOR}.${PETSC_VERSION_MINOR}.${PETSC_VERSION_SUBMINOR}.99" PARENT_SCOPE)
+      set (PETSC_VERSION "${PETSC_VERSION_MAJOR}.${PETSC_VERSION_MINOR}.${PETSC_VERSION_SUBMINOR}p99")
+      set (PETSC_VERSION "${PETSC_VERSION}" PARENT_SCOPE)
     endif ()
   else ()
     message (SEND_ERROR "PETSC_DIR can not be used, ${PETSC_DIR}/include/petscversion.h does not exist")
   endif ()
+
+  MESSAGE(STATUS "PETSC version: ${PETSC_VERSION}")
+  
 endfunction ()
 
+
+
+########################################################## 
+# Try to find main header file.
+##########################################################
 find_path (PETSC_DIR include/petsc.h
   HINTS ENV PETSC_DIR
   PATHS
   # Debian paths
-  /usr/lib/petscdir/3.4
   /usr/lib/petscdir/3.3 /usr/lib/petscdir/3.2 /usr/lib/petscdir/3.1
   /usr/lib/petscdir/3.0.0 /usr/lib/petscdir/2.3.3 /usr/lib/petscdir/2.3.2
   $ENV{HOME}/petsc
@@ -80,6 +102,10 @@ find_path (PETSC_DIR include/petsc.h
 
 find_program (MAKE_EXECUTABLE NAMES make gmake)
 
+
+########################################################## 
+# Try to find PETSC_ARCH subdirectory that contains petscconf.h file.
+##########################################################
 if (PETSC_DIR AND NOT PETSC_ARCH)
   set (_petsc_arches
     $ENV{PETSC_ARCH}                   # If set, use environment variable first
@@ -100,6 +126,10 @@ if (PETSC_DIR AND NOT PETSC_ARCH)
   set (petscconf "NOTFOUND" CACHE INTERNAL "Scratch variable" FORCE)
 endif (PETSC_DIR AND NOT PETSC_ARCH)
 
+
+########################################################## 
+# Use package multipass to alow multiple tries when search for PETSc.
+##########################################################
 set (petsc_slaves LIBRARIES_SYS LIBRARIES_VEC LIBRARIES_MAT LIBRARIES_DM LIBRARIES_KSP LIBRARIES_SNES LIBRARIES_TS
   INCLUDE_DIR INCLUDE_CONF)
 include (FindPackageMultipass)
@@ -107,6 +137,10 @@ find_package_multipass (PETSc petsc_config_current
   STATES DIR ARCH
   DEPENDENTS INCLUDES LIBRARIES COMPILER MPIEXEC ${petsc_slaves})
 
+  
+########################################################## 
+# Determine dir layout, detect 'rules' and 'variables' files, detect PETSc version
+##########################################################
 # Determine whether the PETSc layout is old-style (through 2.3.3) or
 # new-style (>= 3.0.0)
 if (EXISTS "${PETSC_DIR}/${PETSC_ARCH}/include/petscconf.h")   # > 2.3.3
@@ -119,6 +153,7 @@ elseif (PETSC_DIR)
   message (SEND_ERROR "The pair PETSC_DIR=${PETSC_DIR} PETSC_ARCH=${PETSC_ARCH} do not specify a valid PETSc installation")
 endif ()
 
+# All remaining is under this condition except the standard variable handling at the very end
 if (petsc_conf_rules AND petsc_conf_variables AND NOT petsc_config_current)
   petsc_get_version()
 
@@ -127,6 +162,9 @@ if (petsc_conf_rules AND petsc_conf_variables AND NOT petsc_config_current)
   set (ENV{PETSC_DIR} "${PETSC_DIR}")
   set (ENV{PETSC_ARCH} "${PETSC_ARCH}")
 
+  ################################################################
+  # Extracting  variables from PETSc configuration
+  ##############################################################
   # A temporary makefile to probe the PETSc configuration
   set (petsc_config_makefile "${PROJECT_BINARY_DIR}/Makefile.petsc")
   file (WRITE "${petsc_config_makefile}"
@@ -136,24 +174,45 @@ if (petsc_conf_rules AND petsc_conf_variables AND NOT petsc_config_current)
 include ${petsc_conf_rules}
 include ${petsc_conf_variables}
 show :
-	-@echo -n \${\${VARIABLE}}
+\t-@echo -n \${\${VARIABLE}}
 ")
 
+  ######################################
   macro (PETSC_GET_VARIABLE name var)
     set (${var} "NOTFOUND" CACHE INTERNAL "Cleared" FORCE)
     execute_process (COMMAND ${MAKE_EXECUTABLE} --no-print-directory -f ${petsc_config_makefile} show VARIABLE=${name}
       OUTPUT_VARIABLE ${var}
       RESULT_VARIABLE petsc_return)
   endmacro (PETSC_GET_VARIABLE)
+
+  macro(PETSC_EXPORT_VARIABLES var_list)
+      message(STATUS ${var_list})   
+      
+      foreach( var ${var_list} )
+          petsc_get_variable(${var} PETSC_VAR_${var})
+          message(STATUS "EXPORTING PETSC VARIABLE: " ${var} " as PETSC_VAR_${var} = " ${PETSC_VAR_${var}})
+      endforeach(var)
+  endmacro(PETSC_EXPORT_VARIABLES)  
+  
   petsc_get_variable (PETSC_LIB_DIR            petsc_lib_dir)
   petsc_get_variable (PETSC_EXTERNAL_LIB_BASIC petsc_libs_external)
   petsc_get_variable (PETSC_CCPPFLAGS          petsc_cpp_line)
   petsc_get_variable (PETSC_INCLUDE            petsc_include)
   petsc_get_variable (PCC                      petsc_cc)
-  petsc_get_variable (PCC_FLAGS                petsc_cc_flags)
   petsc_get_variable (MPIEXEC                  petsc_mpiexec)
+
+  set(export_variable_list MPIFC_SHOW MPICXX_SHOW MPICC_SHOW CC FC CC_FLAGS PCC_FLAGS FC_FLAGS CPP_FLAGS
+  METIS_INCLUDE BLASLAPACK_INCLUDE PARMETIS_INCLUDE MUMPS_INCLUDE
+  MPI_LIB MUMPS_LIB  METIS_LIB PARMETIS_LIB BLASLAPACK_LIB SCALAPACK_LIB)
+  
+  petsc_export_variables("${export_variable_list}") 
+  
+
   # We are done with the temporary Makefile, calling PETSC_GET_VARIABLE after this point is invalid!
   file (REMOVE ${petsc_config_makefile})
+  # add libraries specified by user (possibly fixing wrong sequence provided by PETSc)
+  set(petsc_libs_external "${petsc_libs_external} ${PETSC_ADDITIONAL_LIBS}")
+  
 
   include (ResolveCompilerPaths)
   # Extract include paths and libraries from compile command line
@@ -175,7 +234,7 @@ show :
       endforeach(flag_var)
       if(${using_md} MATCHES "True")
         message(WARNING "PETSc was built with /MT, but /MD is currently set.
- See http://www.cmake.org/Wiki/CMake_FAQ#How_can_I_build_my_MSVC_application_with_a_static_runtime.3F")
+See http://www.cmake.org/Wiki/CMake_FAQ#How_can_I_build_my_MSVC_application_with_a_static_runtime.3F")
       endif(${using_md} MATCHES "True")
     endif (petsc_cc_flags MATCHES "-MT")
   endif (WIN32)
@@ -184,6 +243,9 @@ show :
   convert_cygwin_path(petsc_lib_dir)
   message (STATUS "petsc_lib_dir ${petsc_lib_dir}")
 
+  ###############################################################################
+  # Find PETSc libraries
+  ##############################################################################
   macro (PETSC_FIND_LIBRARY suffix name)
     set (PETSC_LIBRARY_${suffix} "NOTFOUND" CACHE INTERNAL "Cleared" FORCE) # Clear any stale value, if we got here, we need to find it again
     if (WIN32)
@@ -207,6 +269,7 @@ show :
     petsc_find_library (TS   petscts)
     macro (PETSC_JOIN libs deps)
       list (APPEND PETSC_LIBRARIES_${libs} ${PETSC_LIBRARIES_${deps}})
+      message(STATUS "PETSC_LIBRARIES_${libs}: " ${PETSC_LIBRARIES_${libs}})       
     endmacro (PETSC_JOIN libs deps)
     petsc_join (VEC  SYS)
     petsc_join (MAT  VEC)
@@ -215,6 +278,7 @@ show :
     petsc_join (SNES KSP)
     petsc_join (TS   SNES)
     petsc_join (ALL  TS)
+    
   else ()
     set (PETSC_LIBRARY_VEC "NOTFOUND" CACHE INTERNAL "Cleared" FORCE) # There is no libpetscvec
     petsc_find_library (SINGLE petsc)
@@ -229,7 +293,13 @@ show :
   endif ()
 
   include(Check${PETSC_LANGUAGE_BINDINGS}SourceRuns)
+  include(Check${PETSC_LANGUAGE_BINDINGS}SourceCompiles)
+  
+  #########################################################################
+  # Test that PETSc works
+  ############################################################
   macro (PETSC_TEST_RUNS includes libraries runs)
+
     if(${PETSC_LANGUAGE_BINDINGS} STREQUAL "C")
       set(_PETSC_ERR_FUNC "CHKERRQ(ierr)")
     elseif(${PETSC_LANGUAGE_BINDINGS} STREQUAL "CXX")
@@ -245,22 +315,30 @@ show :
 static const char help[] = \"PETSc test program.\";
 #include <petscts.h>
 int main(int argc,char *argv[]) {
-  PetscErrorCode ierr;
-  TS ts;
+PetscErrorCode ierr;
+TS ts;
 
-  ierr = PetscInitialize(&argc,&argv,0,help);${_PETSC_ERR_FUNC};
-  ierr = TSCreate(PETSC_COMM_WORLD,&ts);${_PETSC_ERR_FUNC};
-  ierr = TSSetFromOptions(ts);${_PETSC_ERR_FUNC};
-  ierr = ${_PETSC_TSDestroy};${_PETSC_ERR_FUNC};
-  ierr = PetscFinalize();${_PETSC_ERR_FUNC};
-  return 0;
+ierr = PetscInitialize(&argc,&argv,0,help);${_PETSC_ERR_FUNC};
+ierr = TSCreate(PETSC_COMM_WORLD,&ts);${_PETSC_ERR_FUNC};
+ierr = TSSetFromOptions(ts);${_PETSC_ERR_FUNC};
+ierr = ${_PETSC_TSDestroy};${_PETSC_ERR_FUNC};
+ierr = PetscFinalize();${_PETSC_ERR_FUNC};
+return 0;
 }
 ")
-    multipass_source_runs ("${includes}" "${libraries}" "${_PETSC_TEST_SOURCE}" ${runs} "${PETSC_LANGUAGE_BINDINGS}")
-    if (${${runs}})
-      set (PETSC_EXECUTABLE_RUNS "YES" CACHE BOOL
-	"Can the system successfully run a PETSc executable?  This variable can be manually set to \"YES\" to force CMake to accept a given PETSc configuration, but this will almost always result in a broken build.  If you change PETSC_DIR, PETSC_ARCH, or PETSC_CURRENT you would have to reset this variable." FORCE)
-    endif (${${runs}})
+
+    # check if we can at least compile the source
+    multipass_c_source_compiles("${includes}" "${libraries}" "${_PETSC_TEST_SOURCE}" ${runs})
+
+    if (${${runs}}) 
+      # check if we can run the executable 
+      multipass_c_source_runs ("${includes}" "${libraries}" "${_PETSC_TEST_SOURCE}" ${runs}_runs)
+
+      if (${${runs}_runs}) 
+        set (PETSC_EXECUTABLE_RUNS "YES" CACHE BOOL
+          "Can the system successfully compile and link a PETSc executable?  This variable can be manually set to \"YES\" to force CMake to accept a given PETSc configuration.  If you change PETSC_DIR, PETSC_ARCH, or PETSC_CURRENT you would have to reset this variable." FORCE)         
+      endif(${${runs}_runs})    
+    endif (${${runs}}) 
   endmacro (PETSC_TEST_RUNS)
 
 
@@ -269,17 +347,28 @@ int main(int argc,char *argv[]) {
   mark_as_advanced (PETSC_INCLUDE_DIR PETSC_INCLUDE_CONF)
   set (petsc_includes_minimal ${PETSC_INCLUDE_CONF} ${PETSC_INCLUDE_DIR})
 
+  # Macro resolve_libraries comes from ResolveCompilerPaths, it tries resolve all libraries form given compiler line
+  # Unfortunately this only mimics compiler resolutions and occasionally can be incorrect. In such a case use PETSC_ADDITIONAL_LIBS.
+  message(STATUS "[FindPETSc] Try to resolve libraries from: '${petsc_libs_external}'")
+  resolve_libraries (petsc_libraries_external "${petsc_libs_external}")
+  message(STATUS "[FindPETSc] Resolved path: '${petsc_libraries_external}'")
+  
+  # Multipass_test_1 ####################
   petsc_test_runs ("${petsc_includes_minimal}" "${PETSC_LIBRARIES_TS}" petsc_works_minimal)
   if (petsc_works_minimal)
     message (STATUS "Minimal PETSc includes and libraries work.  This probably means we are building with shared libs.")
     set (petsc_includes_needed "${petsc_includes_minimal}")
-  else (petsc_works_minimal)	# Minimal includes fail, see if just adding full includes fixes it
+  else (petsc_works_minimal)    # Minimal includes fail, see if just adding full includes fixes it
+  
+    # Multipass_test_2 ####################
     petsc_test_runs ("${petsc_includes_all}" "${PETSC_LIBRARIES_TS}" petsc_works_allincludes)
     if (petsc_works_allincludes) # It does, we just need all the includes (
-      message (STATUS "PETSc requires extra include paths, but links correctly with only interface libraries.  This is an unexpected configuration (but it seems to work fine).")
+      message (STATUS "PETSc requires extra include paths, but links correctly with only interface libraries. This is an unexpected configuration (but it seems to work fine).")
       set (petsc_includes_needed ${petsc_includes_all})
     else (petsc_works_allincludes) # We are going to need to link the external libs explicitly
-      resolve_libraries (petsc_libraries_external "${petsc_libs_external}")
+      
+      # Multipass_test_3 ####################
+      
       foreach (pkg SYS VEC MAT DM KSP SNES TS ALL)
 	list (APPEND PETSC_LIBRARIES_${pkg}  ${petsc_libraries_external})
       endforeach (pkg)
@@ -288,20 +377,38 @@ int main(int argc,char *argv[]) {
 	 message (STATUS "PETSc only need minimal includes, but requires explicit linking to all dependencies.  This is expected when PETSc is built with static libraries.")
 	set (petsc_includes_needed ${petsc_includes_minimal})
       else (petsc_works_alllibraries)
+      
+        # Multipass_test_4 ####################      
 	# It looks like we really need everything, should have listened to Matt
-	set (petsc_includes_needed ${petsc_includes_all})
 	petsc_test_runs ("${petsc_includes_all}" "${PETSC_LIBRARIES_TS}" petsc_works_all)
 	if (petsc_works_all) # We fail anyways
 	  message (STATUS "PETSc requires extra include paths and explicit linking to all dependencies.  This probably means you have static libraries and something unexpected in PETSc headers.")
+	  set (petsc_includes_needed ${petsc_includes_all})
 	else (petsc_works_all) # We fail anyways
-	  message (STATUS "PETSc could not be used, maybe the install is broken.")
+	  message (STATUS "
+	  Can not compile and link PETSc executable, probably some missing librairies.
+	  See BUILD_DIR/CMakeFiles/CMakeError.log for reasons, check library resolution after 'MULTIPASS_TEST_*_petsc_works_allincludes'.
+	  Try to add missing libraries through PETSC_ADDITIONAL_LIBS variable.")
 	endif (petsc_works_all)
       endif (petsc_works_alllibraries)
     endif (petsc_works_allincludes)
   endif (petsc_works_minimal)
 
+  
+  
+  if (petsc_includes_needed)            # this indicates PETSC_FOUND
+    if (${PETSC_EXECUTABLE_RUNS})       # this is optional
+    else()
+        message(STATUS "
+        Can compile but can not run PETSC executable. Probably problem with mpiexec or with shared libraries.
+        See See BUILD_DIR/CMakeFiles/CMakeError.log for reasons.")
+    endif(${PETSC_EXECUTABLE_RUNS})    
+  endif(petsc_includes_needed)  
+
+  
   # We do an out-of-source build so __FILE__ will be an absolute path, hence __INSDIR__ is superfluous
-  if (${PETSC_VERSION} VERSION_LESS 3.1)
+  MESSAGE(STATUS "petsc ver: ${PETSC_VERSION}")
+  if ("${PETSC_VERSION}" VERSION_LESS 3.1)
     set (PETSC_DEFINITIONS "-D__SDIR__=\"\"" CACHE STRING "PETSc definitions" FORCE)
   else ()
     set (PETSC_DEFINITIONS "-D__INSDIR__=" CACHE STRING "PETSc definitions" FORCE)
@@ -311,13 +418,14 @@ int main(int argc,char *argv[]) {
   set (PETSC_INCLUDES ${petsc_includes_needed} CACHE STRING "PETSc include path" FORCE)
   set (PETSC_LIBRARIES ${PETSC_LIBRARIES_ALL} CACHE STRING "PETSc libraries" FORCE)
   set (PETSC_COMPILER ${petsc_cc} CACHE FILEPATH "PETSc compiler" FORCE)
-  # Note that we have forced values for all these choices.  If you
+  set (PETSC_EXTERNAL_LIB ${petsc_libraries_external} CACHE STRING "PETSc external libraries" FORCE)
+  # Note that we have forced values for all these choices. If you
   # change these, you are telling the system to trust you that they
-  # work.  It is likely that you will end up with a broken build.
+  # work. It is likely that you will end up with a broken build.
   mark_as_advanced (PETSC_INCLUDES PETSC_LIBRARIES PETSC_COMPILER PETSC_DEFINITIONS PETSC_MPIEXEC PETSC_EXECUTABLE_RUNS)
 endif ()
 
 include (FindPackageHandleStandardArgs)
 find_package_handle_standard_args (PETSc
-  "PETSc could not be found.  Be sure to set PETSC_DIR and PETSC_ARCH."
-  PETSC_INCLUDES PETSC_LIBRARIES PETSC_EXECUTABLE_RUNS)
+  "PETSc could not be found. Be sure to set PETSC_DIR and PETSC_ARCH."
+  PETSC_INCLUDES PETSC_LIBRARIES PETSC_EXTERNAL_LIB)
