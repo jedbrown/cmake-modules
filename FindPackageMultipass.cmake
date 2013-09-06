@@ -21,16 +21,21 @@
 #      # Make temporary files, run programs, etc, to determine FOO_INCLUDES and FOO_LIBRARIES
 #    endif (NOT foo_current)
 #
-# MULTIPASS_SOURCE_RUNS (Name INCLUDES LIBRARIES SOURCE RUNS LANGUAGE)
+# MULTIPASS_SOURCE_RUNS (INCLUDES LIBRARIES SOURCE RUNS LANGUAGE)
 #  Always runs the given test, use this when you need to re-run tests
 #  because parent variables have made old cache entries stale. The LANGUAGE
 #  variable is either C or CXX indicating which compiler the test should
 #  use. 
-# MULTIPASS_C_SOURCE_RUNS (Name INCLUDES LIBRARIES SOURCE RUNS)
+#
+# MULTIPASS_C_SOURCE_RUNS (INCLUDES LIBRARIES SOURCE RUNS)
 #  DEPRECATED! This is only included for backwards compatability. Use
 #  the more general MULTIPASS_SOURCE_RUNS instead.
 #  Always runs the given test, use this when you need to re-run tests
 #  because parent variables have made old cache entries stale.
+#
+# MULTIPASS_C_SOURCE_COMPILES(includes libraries source compiles)
+#  Same as MULTIPASS_C_SOURCE_RUNS but only check if the source compiles.
+#  TODO: make version for any language like MULTIPASS_SOURCE_RUNS
 
 macro (FIND_PACKAGE_MULTIPASS _name _current)
   string (TOUPPER ${_name} _NAME)
@@ -104,3 +109,27 @@ endmacro (MULTIPASS_SOURCE_RUNS)
 macro (MULTIPASS_C_SOURCE_RUNS includes libraries source runs)
   multipass_source_runs("${includes}" "${libraries}" "${source}" ${runs} "C")
 endmacro (MULTIPASS_C_SOURCE_RUNS)
+
+
+macro (MULTIPASS_C_SOURCE_COMPILES includes libraries source compiles)
+  include (CheckCSourceCompiles)
+  # This is a ridiculous hack.  CHECK_C_SOURCE_* thinks that if the
+  # *name* of the return variable doesn't change, then the test does
+  # not need to be re-run.  We keep an internal count which we
+  # increment to guarantee that every test name is unique.  If we've
+  # gotten here, then the configuration has changed enough that the
+  # test *needs* to be rerun.
+  if (NOT MULTIPASS_TEST_COUNT)
+    set (MULTIPASS_TEST_COUNT 00)
+  endif (NOT MULTIPASS_TEST_COUNT)
+  math (EXPR _tmp "${MULTIPASS_TEST_COUNT} + 1") # Why can't I add to a cache variable?
+  set (MULTIPASS_TEST_COUNT ${_tmp} CACHE INTERNAL "Unique test ID")
+  set (testname MULTIPASS_TEST_${MULTIPASS_TEST_COUNT}_${compiles})
+  set (CMAKE_REQUIRED_INCLUDES ${includes})
+  set (CMAKE_REQUIRED_LIBRARIES ${libraries})
+  message(STATUS "check_c_source_compiles: ${testname}")
+  check_c_source_compiles ("${source}" ${testname})
+  set (${compiles} "${${testname}}")
+endmacro (MULTIPASS_C_SOURCE_COMPILES)
+
+
