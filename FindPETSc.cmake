@@ -112,7 +112,10 @@ find_package_multipass (PETSc petsc_config_current
 
 # Determine whether the PETSc layout is old-style (through 2.3.3) or
 # new-style (>= 3.0.0)
-if (EXISTS "${PETSC_DIR}/${PETSC_ARCH}/include/petscconf.h")   # > 2.3.3
+if (EXISTS "${PETSC_DIR}/${PETSC_ARCH}/lib/petsc-conf/petscvariables") # > 3.5
+  set (petsc_conf_rules "${PETSC_DIR}/lib/petsc-conf/rules")
+  set (petsc_conf_variables "${PETSC_DIR}/lib/petsc-conf/variables")
+elseif (EXISTS "${PETSC_DIR}/${PETSC_ARCH}/include/petscconf.h")   # > 2.3.3
   set (petsc_conf_rules "${PETSC_DIR}/conf/rules")
   set (petsc_conf_variables "${PETSC_DIR}/conf/variables")
 elseif (EXISTS "${PETSC_DIR}/bmake/${PETSC_ARCH}/petscconf.h") # <= 2.3.3
