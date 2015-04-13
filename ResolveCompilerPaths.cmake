@@ -89,7 +89,7 @@ endmacro (RESOLVE_LIBRARIES)
 
 macro (RESOLVE_INCLUDES INCS COMPILE_LINE)
   string (REGEX MATCHALL "-I([^\" ]+|\"[^\"]+\")" _all_tokens "${COMPILE_LINE}")
-  set (_incs_found)
+  set (_incs_found "")
   foreach (token ${_all_tokens})
     string (REGEX REPLACE "^-I" "" token ${token})
     string (REGEX REPLACE "//" "/" token ${token})
