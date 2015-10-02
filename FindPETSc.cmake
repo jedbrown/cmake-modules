@@ -136,7 +136,7 @@ set (petsc_slaves LIBRARIES_SYS LIBRARIES_VEC LIBRARIES_MAT LIBRARIES_DM LIBRARI
 include (FindPackageMultipass)
 find_package_multipass (PETSc petsc_config_current
   STATES DIR ARCH
-  DEPENDENTS INCLUDES LIBRARIES COMPILER MPIEXEC ${petsc_slaves})
+  DEPENDENTS INCLUDES LIBRARIES COMPILER MPIEXEC EXTERNAL_LIB ${petsc_slaves})
 
   
 ########################################################## 
@@ -190,11 +190,12 @@ show :
   endmacro (PETSC_GET_VARIABLE)
 
   macro(PETSC_EXPORT_VARIABLES var_list)
-      message(STATUS ${var_list})   
+      #message(STATUS ${var_list})   
       
       foreach( var ${var_list} )
-          petsc_get_variable(${var} PETSC_VAR_${var})
+          petsc_get_variable(${var} PETSC_VAR_tmp_${var})
           message(STATUS "EXPORTING PETSC VARIABLE: " ${var} " as PETSC_VAR_${var} = " ${PETSC_VAR_${var}})
+          set(PETSC_VAR_${var} ${PETSC_VAR_tmp_${var}} CACHE STRING "Exported variable from PETSc." FORCE)
       endforeach(var)
   endmacro(PETSC_EXPORT_VARIABLES)  
   
