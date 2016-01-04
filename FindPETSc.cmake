@@ -4,7 +4,6 @@
 #  PETSC_FOUND        - system has PETSc
 #  PETSC_INCLUDES     - the PETSc include directories
 #  PETSC_LIBRARIES    - Link these to use PETSc
-#  PETSC_EXTERNAL_LIBRARIES    - Link these to get external libraries e.g. mpi from PETSc
 #  PETSC_COMPILER     - Compiler used by PETSc, helpful to find a compatible MPI
 #  PETSC_DEFINITIONS  - Compiler switches for using PETSc
 #  PETSC_MPIEXEC      - Executable for running MPI programs
@@ -18,6 +17,10 @@
 # Setting these changes the behavior of the search
 #  PETSC_DIR - directory in which PETSc resides
 #  PETSC_ARCH - build architecture
+#
+# Note: Using the mpicc/mpicxx scripts is often more reliable than using findMPI.cmake.
+#       Information on the correct way to set the compiler can be found in the CMAKE FAQs:
+#       https://cmake.org/Wiki/CMake_FAQ#How_do_I_use_a_different_compiler.3F 
 #
 # Redistribution and use is allowed according to the terms of the BSD license.
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
@@ -317,12 +320,11 @@ int main(int argc,char *argv[]) {
   set (PETSC_MPIEXEC ${petsc_mpiexec} CACHE FILEPATH "Executable for running PETSc MPI programs" FORCE)
   set (PETSC_INCLUDES ${petsc_includes_needed} CACHE STRING "PETSc include path" FORCE)
   set (PETSC_LIBRARIES ${PETSC_LIBRARIES_ALL} CACHE STRING "PETSc libraries" FORCE)
-  set (PETSC_EXTERNAL_LIBRARIES ${petsc_libs_external} CACHE STRING "PETSc libraries" FORCE)
   set (PETSC_COMPILER ${petsc_cc} CACHE FILEPATH "PETSc compiler" FORCE)
   # Note that we have forced values for all these choices.  If you
   # change these, you are telling the system to trust you that they
   # work.  It is likely that you will end up with a broken build.
-  mark_as_advanced (PETSC_INCLUDES PETSC_LIBRARIES PETSC_EXTERNAL_LIBRARIES PETSC_COMPILER PETSC_DEFINITIONS PETSC_MPIEXEC PETSC_EXECUTABLE_RUNS)
+  mark_as_advanced (PETSC_INCLUDES PETSC_LIBRARIES PETSC_COMPILER PETSC_DEFINITIONS PETSC_MPIEXEC PETSC_EXECUTABLE_RUNS)
 endif ()
 
 include (FindPackageHandleStandardArgs)
