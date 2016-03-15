@@ -18,6 +18,10 @@
 #  PETSC_DIR - directory in which PETSc resides
 #  PETSC_ARCH - build architecture
 #
+# Note: Using the mpicc/mpicxx scripts is often more reliable than using findMPI.cmake.
+#       Information on the correct way to set the compiler can be found in the CMAKE FAQs:
+#       https://cmake.org/Wiki/CMake_FAQ#How_do_I_use_a_different_compiler.3F 
+#
 # Redistribution and use is allowed according to the terms of the BSD license.
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 #
