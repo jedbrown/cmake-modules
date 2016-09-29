@@ -47,9 +47,18 @@ else()
   endforeach()
 endif()
 
+macro (check_if_arch dir)
+  set (PETSC_TMP "${PETSC_DIR}/")
+  if (EXISTS "${PETSC_DIR}/${PETSC_ARCH}/${dir}")
+    set (PETSC_TMP "${PETSC_TMP}/${PETSC_ARCH}")
+  endif ()
+endmacro (check_if_arch)
+
+
 function (petsc_get_version)
-  if (EXISTS "${PETSC_DIR}/include/petscversion.h")
-    file (STRINGS "${PETSC_DIR}/include/petscversion.h" vstrings REGEX "#define PETSC_VERSION_(RELEASE|MAJOR|MINOR|SUBMINOR|PATCH) ")
+  check_if_arch("include/petscversion.h")
+  if (EXISTS "${PETSC_TMP}/include/petscversion.h")
+    file (STRINGS "${PETSC_TMP}/include/petscversion.h" vstrings REGEX "#define PETSC_VERSION_(RELEASE|MAJOR|MINOR|SUBMINOR|PATCH) ")
     foreach (line ${vstrings})
       string (REGEX REPLACE " +" ";" fields ${line}) # break line into three fields (the first is always "#define")
       list (GET fields 1 var)
@@ -64,7 +73,7 @@ function (petsc_get_version)
       set (PETSC_VERSION "${PETSC_VERSION_MAJOR}.${PETSC_VERSION_MINOR}.${PETSC_VERSION_SUBMINOR}.99" PARENT_SCOPE)
     endif ()
   else ()
-    message (SEND_ERROR "PETSC_DIR can not be used, ${PETSC_DIR}/include/petscversion.h does not exist")
+    message (SEND_ERROR "PETSC_DIR can not be used, ${PETSC_TMP}/include/petscversion.h does not exist")
   endif ()
 endfunction ()
 
@@ -113,11 +122,13 @@ find_package_multipass (PETSc petsc_config_current
 # Determine whether the PETSc layout is old-style (through 2.3.3) or
 # new-style (>= 3.0.0)
 if (EXISTS "${PETSC_DIR}/${PETSC_ARCH}/lib/petsc/conf/petscvariables") # > 3.5
-  set (petsc_conf_rules "${PETSC_DIR}/lib/petsc/conf/rules")
-  set (petsc_conf_variables "${PETSC_DIR}/lib/petsc/conf/variables")
+  check_if_arch("lib/petsc/conf/rules")
+  set (petsc_conf_rules "${PETSC_TMP}/lib/petsc/conf/rules")
+  set (petsc_conf_variables "${PETSC_TMP}/lib/petsc/conf/variables")
 elseif (EXISTS "${PETSC_DIR}/${PETSC_ARCH}/include/petscconf.h")   # > 2.3.3
-  set (petsc_conf_rules "${PETSC_DIR}/conf/rules")
-  set (petsc_conf_variables "${PETSC_DIR}/conf/variables")
+  check_if_arch("conf/rules")
+  set (petsc_conf_rules "${PETSC_TMP}/conf/rules")
+  set (petsc_conf_variables "${PETSC_TMP}/conf/variables")
 elseif (EXISTS "${PETSC_DIR}/bmake/${PETSC_ARCH}/petscconf.h") # <= 2.3.3
   set (petsc_conf_rules "${PETSC_DIR}/bmake/common/rules")
   set (petsc_conf_variables "${PETSC_DIR}/bmake/common/variables")
@@ -224,6 +235,10 @@ show :
   else ()
     set (PETSC_LIBRARY_VEC "NOTFOUND" CACHE INTERNAL "Cleared" FORCE) # There is no libpetscvec
     petsc_find_library (SINGLE petsc)
+    # Hack : for ubuntu with real in the architecture
+    if (PETSC_LIBRARY_SINGLE  STREQUAL "PETSC_LIBRARY_SINGLE-NOTFOUND")
+      petsc_find_library (SINGLE petsc_real)
+    endif ()
     foreach (pkg SYS VEC MAT DM KSP SNES TS ALL)
       set (PETSC_LIBRARIES_${pkg} "${PETSC_LIBRARY_SINGLE}")
     endforeach ()
@@ -270,7 +285,8 @@ int main(int argc,char *argv[]) {
   endmacro (PETSC_TEST_RUNS)
 
 
-  find_path (PETSC_INCLUDE_DIR petscts.h HINTS "${PETSC_DIR}" PATH_SUFFIXES include NO_DEFAULT_PATH)
+  find_path (PETSC_INCLUDE_DIR petscts.h HINTS "${PETSC_DIR}" "${PETSC_DIR}/${PETSC_ARCH}" PATH_SUFFIXES include NO_DEFAULT_PATH)
+
   find_path (PETSC_INCLUDE_CONF petscconf.h HINTS "${PETSC_DIR}" PATH_SUFFIXES "${PETSC_ARCH}/include" "bmake/${PETSC_ARCH}" NO_DEFAULT_PATH)
   mark_as_advanced (PETSC_INCLUDE_DIR PETSC_INCLUDE_CONF)
   set (petsc_includes_minimal ${PETSC_INCLUDE_CONF} ${PETSC_INCLUDE_DIR})
