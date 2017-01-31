@@ -72,6 +72,7 @@ find_path (PETSC_DIR include/petsc.h
   HINTS ENV PETSC_DIR
   PATHS
   # Debian paths
+  /usr/lib/petsc
   /usr/lib/petscdir/3.5.1 /usr/lib/petscdir/3.5
   /usr/lib/petscdir/3.4.2 /usr/lib/petscdir/3.4
   /usr/lib/petscdir/3.3 /usr/lib/petscdir/3.2 /usr/lib/petscdir/3.1
@@ -224,6 +225,13 @@ show :
   else ()
     set (PETSC_LIBRARY_VEC "NOTFOUND" CACHE INTERNAL "Cleared" FORCE) # There is no libpetscvec
     petsc_find_library (SINGLE petsc)
+    # Debian 9/Ubuntu 16.04 uses _real and _complex extensions when using libraries in /usr/lib/petsc.
+    if (NOT PETSC_LIBRARY_SINGLE)
+      petsc_find_library (SINGLE petsc_real)
+    endif()
+    if (NOT PETSC_LIBRARY_SINGLE)
+      petsc_find_library (SINGLE petsc_complex)
+    endif()
     foreach (pkg SYS VEC MAT DM KSP SNES TS ALL)
       set (PETSC_LIBRARIES_${pkg} "${PETSC_LIBRARY_SINGLE}")
     endforeach ()
