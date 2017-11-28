@@ -27,7 +27,12 @@ set(PETSC_VALID_COMPONENTS
   CXX)
 
 if(NOT PETSc_FIND_COMPONENTS)
-  set(PETSC_LANGUAGE_BINDINGS "C")
+  get_property (_enabled_langs GLOBAL PROPERTY ENABLED_LANGUAGES)
+  if ("C" IN_LIST _enabled_langs)
+    set(PETSC_LANGUAGE_BINDINGS "C")
+  else ()
+    set(PETSC_LANGUAGE_BINDINGS "CXX")
+  endif ()
 else()
   # Right now, this is designed for compatability with the --with-clanguage option, so
   # only allow one item in the components list.
@@ -240,11 +245,6 @@ show :
 
   include(Check${PETSC_LANGUAGE_BINDINGS}SourceRuns)
   macro (PETSC_TEST_RUNS includes libraries runs)
-    if(${PETSC_LANGUAGE_BINDINGS} STREQUAL "C")
-      set(_PETSC_ERR_FUNC "CHKERRQ(ierr)")
-    elseif(${PETSC_LANGUAGE_BINDINGS} STREQUAL "CXX")
-      set(_PETSC_ERR_FUNC "CHKERRXX(ierr)")
-    endif()
     if (PETSC_VERSION VERSION_GREATER 3.1)
       set (_PETSC_TSDestroy "TSDestroy(&ts)")
     else ()
@@ -258,11 +258,11 @@ int main(int argc,char *argv[]) {
   PetscErrorCode ierr;
   TS ts;
 
-  ierr = PetscInitialize(&argc,&argv,0,help);${_PETSC_ERR_FUNC};
-  ierr = TSCreate(PETSC_COMM_WORLD,&ts);${_PETSC_ERR_FUNC};
-  ierr = TSSetFromOptions(ts);${_PETSC_ERR_FUNC};
-  ierr = ${_PETSC_TSDestroy};${_PETSC_ERR_FUNC};
-  ierr = PetscFinalize();${_PETSC_ERR_FUNC};
+  ierr = PetscInitialize(&argc,&argv,0,help);CHKERRQ(ierr);
+  ierr = TSCreate(PETSC_COMM_WORLD,&ts);CHKERRQ(ierr);
+  ierr = TSSetFromOptions(ts);CHKERRQ(ierr);
+  ierr = ${_PETSC_TSDestroy};CHKERRQ(ierr);
+  ierr = PetscFinalize();CHKERRQ(ierr);
   return 0;
 }
 ")
