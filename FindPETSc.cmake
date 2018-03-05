@@ -77,15 +77,15 @@ function (petsc_get_version)
   endif ()
 endfunction ()
 
+# Debian uses versioned paths e.g /usr/lib/petscdir/3.5/
+file (GLOB DEB_PATHS "/usr/lib/petscdir/*")
+
 find_path (PETSC_DIR include/petsc.h
   HINTS ENV PETSC_DIR
   PATHS
-  # Debian paths
   /usr/lib/petsc
-  /usr/lib/petscdir/3.5.1 /usr/lib/petscdir/3.5
-  /usr/lib/petscdir/3.4.2 /usr/lib/petscdir/3.4
-  /usr/lib/petscdir/3.3 /usr/lib/petscdir/3.2 /usr/lib/petscdir/3.1
-  /usr/lib/petscdir/3.0.0 /usr/lib/petscdir/2.3.3 /usr/lib/petscdir/2.3.2
+  # Debian paths
+  ${DEB_PATHS}
   # MacPorts path
   /opt/local/lib/petsc
   $ENV{HOME}/petsc
