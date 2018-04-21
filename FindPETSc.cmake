@@ -22,6 +22,8 @@
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 #
 
+cmake_policy(VERSION 3.3)
+
 set(PETSC_VALID_COMPONENTS
   C
   CXX)
