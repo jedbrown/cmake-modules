@@ -54,6 +54,44 @@ else()
   endforeach()
 endif()
 
+
+# Verify that the compiler is able to find mpi.h
+set(PETSC_BINARY_DIR "${CMAKE_BINARY_DIR}/CMakeFiles/FindPETSc")
+set(PETSC_MPI_TESTFILE "${PETSC_BINARY_DIR}/petsc-mpi.c")
+if(PETSC_LANGUAGE_BINDINGS STREQUAL "CXX")
+    set(PETSC_MPI_TESTFILE "${PETSC_MPI_TESTFILE}pp")
+endif()
+
+file (WRITE "${PETSC_MPI_TESTFILE}" "
+#include<mpi.h>
+int main (int argc, char* argv[]) {
+  return 0;
+}
+")
+
+message(STATUS "Performing Test petsc-mpi")
+try_compile(
+    PETSC_MPI_COMPILES
+    "${CMAKE_CURRENT_BINARY_DIR}"
+    "${PETSC_MPI_TESTFILE}"
+    OUTPUT_VARIABLE PETSC_MPI_TESTOUT
+    )
+if(NOT PETSC_MPI_COMPILES)
+    file(WRITE "${PETSC_BINARY_DIR}/petsc-mpi.log" "${PETSC_MPI_TESTOUT}")
+    message(STATUS "Performing Test petsc-mpi - Failure")
+    message(FATAL_ERROR 
+        "Compilation of the petsc mpi test failed. This indicates that the compiler cannot find mpi.h. "
+        "Make sure to set the compiler to the compiler wrapper provided by your MPI version prior to calling this script.\n"
+        "Logfile of the compilation: ${PETSC_BINARY_DIR}/petsc-mpi.log"
+        )
+else()
+    message(STATUS "Performing Test petsc-mpi - Success")
+endif()
+unset(PETSC_MPI_TESTFILE)
+unset(PETSC_MPI_TESTOUT)
+unset(PETSC_MPI_COMPILES)
+
+
 function (petsc_get_version)
   if (EXISTS "${PETSC_DIR}/include/petscversion.h")
     file (STRINGS "${PETSC_DIR}/include/petscversion.h" vstrings REGEX "#define PETSC_VERSION_(RELEASE|MAJOR|MINOR|SUBMINOR|PATCH) ")
