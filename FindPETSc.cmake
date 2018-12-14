@@ -54,42 +54,70 @@ else()
   endforeach()
 endif()
 
+set(PETSC_BINARY_DIR "${CMAKE_BINARY_DIR}/CMakeFiles/FindPETSc")
 
 # Verify that the compiler is able to find mpi.h
-set(PETSC_BINARY_DIR "${CMAKE_BINARY_DIR}/CMakeFiles/FindPETSc")
-set(PETSC_MPI_TESTFILE "${PETSC_BINARY_DIR}/petsc-mpi.c")
-if(PETSC_LANGUAGE_BINDINGS STREQUAL "CXX")
-    set(PETSC_MPI_TESTFILE "${PETSC_MPI_TESTFILE}pp")
-endif()
+function (petsc_check_mpi)
+    set(PETSC_MPI_TESTFILE "${PETSC_BINARY_DIR}/petsc-mpi.c")
+    if(PETSC_LANGUAGE_BINDINGS STREQUAL "CXX")
+        set(PETSC_MPI_TESTFILE "${PETSC_MPI_TESTFILE}pp")
+    endif()
 
-file (WRITE "${PETSC_MPI_TESTFILE}" "
+    file (WRITE "${PETSC_MPI_TESTFILE}" "
 #include<mpi.h>
-int main (int argc, char* argv[]) {
-  return 0;
+int main (int argc, char** argv[]) {
+MPI_Init(NULL, NULL);
+MPI_Finalize();
+return 0;
 }
 ")
 
-message(STATUS "Performing Test petsc-mpi")
-try_compile(
-    PETSC_MPI_COMPILES
-    "${CMAKE_CURRENT_BINARY_DIR}"
-    "${PETSC_MPI_TESTFILE}"
-    OUTPUT_VARIABLE PETSC_MPI_TESTOUT
-    )
-if(NOT PETSC_MPI_COMPILES)
-    file(WRITE "${PETSC_BINARY_DIR}/petsc-mpi.log" "${PETSC_MPI_TESTOUT}")
-    message(STATUS "Performing Test petsc-mpi - Failure")
-    message(FATAL_ERROR 
-        "Compilation of the petsc mpi test failed. This indicates that the compiler cannot find mpi.h. "
-        "Make sure to set the compiler to the compiler wrapper provided by your MPI version prior to calling this script.\n"
-        "Logfile of the compilation: ${PETSC_BINARY_DIR}/petsc-mpi.log"
+    message(STATUS "Performing Test petsc-mpi")
+    try_compile(
+        PETSC_MPI_COMPILES
+        "${PETSC_BINARY_DIR}"
+        "${PETSC_MPI_TESTFILE}"
+        OUTPUT_VARIABLE PETSC_MPI_TESTOUT
         )
-else()
-    message(STATUS "Performing Test petsc-mpi - Success")
-endif()
-unset(PETSC_MPI_TESTFILE)
-unset(PETSC_MPI_TESTOUT)
-unset(PETSC_MPI_COMPILES)
+    file(WRITE "${PETSC_BINARY_DIR}/petsc-mpi.log" "${PETSC_MPI_TESTOUT}")
+    if(NOT PETSC_MPI_COMPILES)
+        message(STATUS "Performing Test petsc-mpi - Failure")
+    else()
+        message(STATUS "Performing Test petsc-mpi - Success")
+    endif()
+    set(PETSC_MPI_WORKS "${PETSC_MPI_COMPILES}" PARENT_SCOPE)
+endfunction(petsc_check_mpi)
+
+# Verify that the compiler is able to find mpi.h
+function (petsc_check_header includes)
+    set(PETSC_HEADER_TESTFILE "${PETSC_BINARY_DIR}/petsc-header.c")
+    if(PETSC_LANGUAGE_BINDINGS STREQUAL "CXX")
+        set(PETSC_HEADER_TESTFILE "${PETSC_HEADER_TESTFILE}pp")
+    endif()
+
+    file (WRITE "${PETSC_HEADER_TESTFILE}" "
+#include<petscsys.h>
+int main (int argc, char* argv[]) {
+return 0;
+}
+")
+
+    message(STATUS "Performing Test petsc-header")
+    try_compile(
+        PETSC_HEADER_COMPILES
+        "${PETSC_BINARY_DIR}"
+        "${PETSC_HEADER_TESTFILE}"
+        CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:LIST=${includes}"
+        OUTPUT_VARIABLE PETSC_HEADER_TESTOUT
+        )
+    file(WRITE "${PETSC_BINARY_DIR}/petsc-header.log" "${PETSC_HEADER_TESTOUT}")
+    if(NOT PETSC_HEADER_COMPILES)
+        message(STATUS "Performing Test petsc-header - Failure")
+    else()
+        message(STATUS "Performing Test petsc-header - Success")
+    endif()
+    set(PETSC_HEADER_WORKS "${PETSC_HEADER_COMPILES}" PARENT_SCOPE)
+endfunction(petsc_check_header)
 
 
 function (petsc_get_version)
@@ -354,7 +382,30 @@ int main(int argc,char *argv[]) {
         if (petsc_works_all) # We fail anyways
           message (STATUS "PETSc requires extra include paths and explicit linking to all dependencies.  This probably means you have static libraries and something unexpected in PETSc headers.")
         else (petsc_works_all) # We fail anyways
-          message (STATUS "PETSc could not be used, maybe the install is broken.")
+          message (STATUS "PETSc does not work. Running more tests to find out why:")
+          petsc_check_header("${petsc_includes_all}")
+          petsc_check_mpi()
+
+          if (PETSC_HEADER_WORKS)
+            if (PETSC_MPI_WORKS)
+              message (STATUS "PETSc include was found and MPI works too. The PETSc libraries could be the problem. Please check the general log.")
+            else (PETSC_MPI_WORKS)
+              message (STATUS "MPI test failed. If PETSc was built with MPI please check if the compiler is set to the compiler wrapper provided by your MPI implementation.")
+            endif (PETSC_MPI_WORKS)
+          else (PETSC_HEADER_WORKS)
+            if (PETSC_MPI_WORKS)
+              message (STATUS "PETSc includes may be incorrect. Please check the log of the header check.")
+            else (PETSC_MPI_WORKS)
+              message (STATUS "PETSc includes are incorrect and MPI failed. If PETSc was built with MPI please check if the compiler is set to the compiler wrapper provided by your MPI implementation.")
+            endif (PETSC_MPI_WORKS)
+          endif (PETSC_HEADER_WORKS)
+          message(STATUS " Settings used for the final test:\n"
+            " Includes: ${petsc_includes_all}\n"
+            " Libraries:${PETSC_LIBRARIES_ALL}\n")
+          message(STATUS " Related log files:\n"
+            "General: ${CMAKE_BINARY_DIR}/CMakeError.log\n"
+            "Header Check: ${PETSC_BINARY_DIR}/petsc-header.log\n"
+            "MPI Check: ${PETSC_BINARY_DIR}/petsc-mpi.log\n")
         endif (petsc_works_all)
       endif (petsc_works_alllibraries)
     endif (petsc_works_allincludes)
