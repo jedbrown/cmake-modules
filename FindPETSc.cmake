@@ -120,6 +120,35 @@ return 0;
 endfunction(petsc_check_header)
 
 
+function (petsc_run_diagnostics includes libraries)
+  message (STATUS "Running more tests to create basic diagnostics:")
+  petsc_check_header("${includes}")
+  petsc_check_mpi()
+  if (PETSc_FIND_REQUIRED)
+      if (PETSC_HEADER_WORKS)
+        if (PETSC_MPI_WORKS)
+          message (STATUS "PETSc include was found and MPI works too. The PETSc libraries could be the problem. Please check the general log.")
+        else (PETSC_MPI_WORKS)
+          message (STATUS "MPI test failed. If PETSc was built with MPI please check if the compiler is set to the compiler wrapper provided by your MPI implementation.")
+        endif (PETSC_MPI_WORKS)
+      else (PETSC_HEADER_WORKS)
+        if (PETSC_MPI_WORKS)
+          message (STATUS "PETSc includes may be incorrect. Please check the log of the header check.")
+        else (PETSC_MPI_WORKS)
+          message (STATUS "PETSc includes are incorrect and MPI failed. If PETSc was built with MPI please check if the compiler is set to the compiler wrapper provided by your MPI implementation.")
+        endif (PETSC_MPI_WORKS)
+      endif (PETSC_HEADER_WORKS)
+      message(STATUS " Settings used for the final test:\n"
+        " Includes: ${includes}\n"
+        " Libraries:${libraries}\n")
+      message(STATUS " Related log files:\n"
+        "General: ${CMAKE_BINARY_DIR}/CMakeError.log\n"
+        "Header Check: ${PETSC_BINARY_DIR}/petsc-header.log\n"
+        "MPI Check: ${PETSC_BINARY_DIR}/petsc-mpi.log\n")
+  endif (PETSc_FIND_REQUIRED)
+endfunction (petsc_run_diagnostics)
+
+
 function (petsc_get_version)
   if (EXISTS "${PETSC_DIR}/include/petscversion.h")
     file (STRINGS "${PETSC_DIR}/include/petscversion.h" vstrings REGEX "#define PETSC_VERSION_(RELEASE|MAJOR|MINOR|SUBMINOR|PATCH) ")
@@ -382,30 +411,10 @@ int main(int argc,char *argv[]) {
         if (petsc_works_all) # We fail anyways
           message (STATUS "PETSc requires extra include paths and explicit linking to all dependencies.  This probably means you have static libraries and something unexpected in PETSc headers.")
         else (petsc_works_all) # We fail anyways
-          message (STATUS "PETSc does not work. Running more tests to find out why:")
-          petsc_check_header("${petsc_includes_all}")
-          petsc_check_mpi()
-
-          if (PETSC_HEADER_WORKS)
-            if (PETSC_MPI_WORKS)
-              message (STATUS "PETSc include was found and MPI works too. The PETSc libraries could be the problem. Please check the general log.")
-            else (PETSC_MPI_WORKS)
-              message (STATUS "MPI test failed. If PETSc was built with MPI please check if the compiler is set to the compiler wrapper provided by your MPI implementation.")
-            endif (PETSC_MPI_WORKS)
-          else (PETSC_HEADER_WORKS)
-            if (PETSC_MPI_WORKS)
-              message (STATUS "PETSc includes may be incorrect. Please check the log of the header check.")
-            else (PETSC_MPI_WORKS)
-              message (STATUS "PETSc includes are incorrect and MPI failed. If PETSc was built with MPI please check if the compiler is set to the compiler wrapper provided by your MPI implementation.")
-            endif (PETSC_MPI_WORKS)
-          endif (PETSC_HEADER_WORKS)
-          message(STATUS " Settings used for the final test:\n"
-            " Includes: ${petsc_includes_all}\n"
-            " Libraries:${PETSC_LIBRARIES_ALL}\n")
-          message(STATUS " Related log files:\n"
-            "General: ${CMAKE_BINARY_DIR}/CMakeError.log\n"
-            "Header Check: ${PETSC_BINARY_DIR}/petsc-header.log\n"
-            "MPI Check: ${PETSC_BINARY_DIR}/petsc-mpi.log\n")
+          message (STATUS "PETSc does not work. Maybe the install is broken.")
+          if (NOT PETSc_FIND_QUIETLY)
+              petsc_run_diagnostics("${petsc_includes_all}" "${PETSC_LIBRARIES_ALL}")
+          endif (NOT PETSc_FIND_QUIETLY)
         endif (petsc_works_all)
       endif (petsc_works_alllibraries)
     endif (petsc_works_allincludes)
